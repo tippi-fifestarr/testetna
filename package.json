@@ -1,0 +1,36 @@
+{
+  "name": "decibel-first-quick-win",
+  "version": "1.0.0",
+  "description": "Complete walkthrough of placing your first order on Decibel - includes all critical steps",
+  "main": "index.js",
+  "scripts": {
+    "setup": "ts-node src/1-setup.ts",
+    "create-subaccount": "ts-node src/2-create-subaccount.ts",
+    "mint-usdc": "ts-node src/2.5-mint-usdc.ts",
+    "deposit-usdc": "ts-node src/3-deposit-usdc.ts",
+    "place-order": "ts-node src/4-place-order.ts",
+    "query-order": "ts-node src/5-query-order.ts",
+    "websocket": "ts-node src/6-websocket-updates.ts",
+    "all": "npm run setup && npm run create-subaccount && npm run mint-usdc && npm run deposit-usdc"
+  },
+  "keywords": [
+    "decibel",
+    "trading",
+    "aptos",
+    "blockchain",
+    "defi"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@aptos-labs/ts-sdk": "^1.0.0",
+    "dotenv": "^16.0.0",
+    "ws": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/ws": "^8.0.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^5.0.0"
+  }
+}

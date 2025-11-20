@@ -45,10 +45,11 @@ async function main() {
   if (!marketAddress) {
     console.log('Fetching markets to get market address...');
     const marketsResponse = await fetch(`${config.REST_API_BASE_URL}/api/v1/markets`);
-    const markets = await marketsResponse.json();
-    const btcPerp = markets.find((m: any) => m.market_name === 'BTC-PERP');
-    marketAddress = btcPerp?.market_addr;
-    console.log(`Using market: BTC-PERP (${marketAddress})\n`);
+    const markets = await marketsResponse.json() as any[];
+    const marketName = config.MARKET_NAME || 'BTC/USD';
+    const market = markets.find((m: any) => m.market_name === marketName);
+    marketAddress = market?.market_addr;
+    console.log(`Using market: ${marketName} (${marketAddress})\n`);
   }
   
   // Build query URL
@@ -77,7 +78,7 @@ async function main() {
       process.exit(1);
     }
     
-    const orderData = await response.json();
+    const orderData = await response.json() as any;
     
     // Display order information
     console.log('━'.repeat(80));

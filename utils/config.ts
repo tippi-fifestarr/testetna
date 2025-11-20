@@ -29,7 +29,7 @@ export const config = {
   // Optional Configuration
   SUBACCOUNT_ADDRESS: process.env.SUBACCOUNT_ADDRESS || '',
   MARKET_ADDRESS: process.env.MARKET_ADDRESS || '',
-  MARKET_NAME: process.env.MARKET_NAME || 'BTC-PERP',
+  MARKET_NAME: process.env.MARKET_NAME || 'BTC/USD',
 };
 
 /**

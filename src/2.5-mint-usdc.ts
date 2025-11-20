@@ -1,20 +1,28 @@
 /**
  * Step 2.5: Mint Testnet USDC (CRITICAL STEP!)
- * 
+ *
  * This script:
  * 1. Mints testnet USDC for trading collateral
- * 2. Maximum 250 USDC per account (testnet limit)
- * 3. USDC uses 6 decimals (250 USDC = 250_000000)
- * 
+ * 2. Uses unrestricted mint (no limit on Netna staging)
+ * 3. USDC uses 6 decimals (1000 USDC = 1000_000000)
+ *
  * WHY THIS IS NEEDED:
  * - APT is only for gas fees (transaction costs)
  * - USDC is your actual trading collateral (margin)
  * - You CANNOT trade without USDC in your subaccount
- * 
- * Documentation:
- * - Function: usdc.move:142 (usdc::restricted_mint)
- * - Limit: usdc.move:37 (250 USDC maximum)
- * - Deposit guide: deposit.mdx:36
+ *
+ * IMPORTANT: Based on Java example analysis
+ * - Function: usdc::mint (NOT restricted_mint!)
+ * - No 250 USDC limit on Netna staging
+ * - This is for testing only - production uses real USDC
+ *
+ * NOTE: There is also a restricted_mint function available:
+ * - Function: usdc::restricted_mint
+ * - Parameters: [amount] (no recipient address needed)
+ * - Limit: 250 USDC maximum per account
+ * - Use case: If you need restricted minting for testing limits
+ * - To use it: Change function to `::usdc::restricted_mint`
+ *   and remove the account address parameter
  */
 
 import { createAptosClient, createAccount, waitForTransaction } from '../utils/client';
@@ -31,7 +39,7 @@ async function main() {
   console.log(`Account: ${account.accountAddress.toString()}\n`);
   
   // Configuration
-  const USDC_AMOUNT = 250; // Maximum allowed
+  const USDC_AMOUNT = 1000; // Unrestricted mint on Netna staging
   const USDC_DECIMALS = 6;
   const chainAmount = usdcToChainUnits(USDC_AMOUNT);
   
@@ -39,7 +47,7 @@ async function main() {
   console.log('━'.repeat(60));
   console.log(`Amount (human):    ${USDC_AMOUNT} USDC`);
   console.log(`Amount (chain):    ${chainAmount} (with ${USDC_DECIMALS} decimals)`);
-  console.log(`Maximum allowed:   250 USDC per account`);
+  console.log(`Mint type:         Unrestricted (Netna staging only)`);
   console.log('━'.repeat(60) + '\n');
   
   console.log('⚠️ IMPORTANT: This is testnet-only USDC for learning.');
@@ -52,9 +60,12 @@ async function main() {
     const transaction = await aptos.transaction.build.simple({
       sender: account.accountAddress,
       data: {
-        function: `${config.PACKAGE_ADDRESS}::usdc::restricted_mint`,
+        function: `${config.PACKAGE_ADDRESS}::usdc::mint`,
         typeArguments: [],
-        functionArguments: [chainAmount],
+        functionArguments: [
+          account.accountAddress, // to_address - who receives the USDC
+          chainAmount,            // amount in smallest units (6 decimals)
+        ],
       },
     });
     
@@ -108,15 +119,13 @@ async function main() {
   } catch (error: any) {
     console.error('❌ Error minting USDC:', error);
     console.error('\nPossible causes:');
-    console.error('  1. Already minted 250 USDC (check your balance)');
-    console.error('  2. Insufficient APT for gas fees');
-    console.error('  3. Network connection issues');
-    console.error('  4. Incorrect package address\n');
+    console.error('  1. Insufficient APT for gas fees (run: npm run fund-wallet)');
+    console.error('  2. Network connection issues');
+    console.error('  3. Incorrect package address');
+    console.error('  4. USDC module not deployed at package address\n');
     
-    if (error.message?.includes('ALREADY_MINTED')) {
-      console.log('💡 You may have already minted your 250 USDC limit.');
-      console.log('   This is normal! You can only mint once per account.\n');
-    }
+    console.error('💡 Tip: Check your APT balance first');
+    console.error('   Run: npm run fund-wallet\n');
   }
 }
 

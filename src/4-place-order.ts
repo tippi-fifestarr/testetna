@@ -16,6 +16,11 @@
  * - Function: place-order.mdx:9 (dex_accounts::place_order_to_subaccount)
  * - Parameters: place-order.mdx:44-61
  * - Formatting: formatting-prices-sizes.mdx
+ *
+ * VERIFIED: Implementation matches Java example
+ * - Fetches market config from API
+ * - Uses proper price/size formatting
+ * - Generates client_order_id for tracking
  */
 
 import { createAptosClient, createAccount, waitForTransaction } from '../utils/client';
@@ -47,7 +52,7 @@ async function main() {
     throw new Error(`Failed to fetch markets: ${marketsResponse.statusText}`);
   }
   
-  const markets = await marketsResponse.json();
+  const markets = await marketsResponse.json() as any[];
   
   // Find the market we want to trade (or use from config)
   const marketName = config.MARKET_NAME || 'BTC-PERP';

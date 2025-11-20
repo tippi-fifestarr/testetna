@@ -14,10 +14,15 @@
  * Documentation:
  * - Function: deposit.mdx:10 (dex_accounts::deposit_to_subaccount_at)
  * - Requirements: deposit.mdx:32-37
- * - USDC metadata: usdc.move:126
+ *
+ * CRITICAL: USDC Metadata Address Derivation (from Java example)
+ * - USDC metadata is derived using createObjectAddress
+ * - Seed: "USDC"
+ * - Formula: createObjectAddress(packageAddress, "USDC")
+ * - NOT from a metadata() function call!
  */
 
-import { createAptosClient, createAccount, waitForTransaction } from '../utils/client';
+import { createAptosClient, createAccount, waitForTransaction, createObjectAddress } from '../utils/client';
 import { config } from '../utils/config';
 import { usdcToChainUnits } from '../utils/formatting';
 
@@ -57,14 +62,20 @@ async function main() {
   console.log('   - Orders require collateral to cover potential losses');
   console.log('   - Without this step, you cannot place orders!\n');
   
-  // Step 1: Get USDC metadata address
-  console.log('Step 1: Getting USDC metadata address...');
+  // Step 1: Derive USDC metadata address
+  console.log('Step 1: Deriving USDC metadata address...');
   
-  // The metadata() function returns the metadata object address
-  // Reference: usdc.move:126
-  const usdcMetadataFunction = `${config.PACKAGE_ADDRESS}::usdc::metadata`;
+  // USDC metadata address is derived from package address with seed "USDC"
+  // This matches the Java example implementation
+  // Formula: SHA3-256(packageAddress + seed + 0xFE)
+  const usdcMetadataAddress = createObjectAddress(
+    config.PACKAGE_ADDRESS,
+    "USDC"
+  );
   
-  console.log(`✅ USDC metadata function: ${usdcMetadataFunction}\n`);
+  console.log(`✅ USDC metadata address: ${usdcMetadataAddress.toString()}`);
+  console.log(`   Derived from package: ${config.PACKAGE_ADDRESS}`);
+  console.log(`   Using seed: "USDC"\n`);
   
   // Step 2: Build deposit transaction
   console.log('Step 2: Building deposit transaction...');
@@ -76,9 +87,9 @@ async function main() {
         function: `${config.PACKAGE_ADDRESS}::dex_accounts::deposit_to_subaccount_at`,
         typeArguments: [],
         functionArguments: [
-          config.SUBACCOUNT_ADDRESS,  // subaccount_address
-          usdcMetadataFunction,       // asset_metadata (USDC)
-          chainAmount,                // amount in smallest units
+          config.SUBACCOUNT_ADDRESS,    // subaccount_address
+          usdcMetadataAddress,          // asset_metadata (USDC object address)
+          chainAmount,                  // amount in smallest units
         ],
       },
     });

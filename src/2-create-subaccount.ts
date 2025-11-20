@@ -13,6 +13,8 @@
 
 import { createAptosClient, createAccount, waitForTransaction } from '../utils/client';
 import { config } from '../utils/config';
+import * as fs from 'fs';
+import * as path from 'path';
 
 async function main() {
   console.log('🏦 Creating Trading Subaccount\n');
@@ -82,7 +84,7 @@ async function main() {
       throw new Error(`API returned ${response.status}: ${response.statusText}`);
     }
     
-    const subaccounts = await response.json();
+    const subaccounts = await response.json() as any[];
     
     if (!subaccounts || subaccounts.length === 0) {
       console.warn('⚠️ No subaccounts found. The indexer might need more time.');
@@ -101,18 +103,52 @@ async function main() {
       console.log(`  Label:       ${sub.custom_label || '(none)'}\n`);
     });
     
-    // Save to .env file suggestion
+    // Automatically update .env file with subaccount address
     const primarySubaccount = subaccounts.find((s: any) => s.is_primary) || subaccounts[0];
+    const subaccountAddress = primarySubaccount.subaccount_address;
+    
+    console.log('📝 Updating .env file with subaccount address...\n');
+    
+    try {
+      const envPath = path.join(__dirname, '../.env');
+      let envContent = fs.readFileSync(envPath, 'utf8');
+      
+      // Replace the placeholder with actual address
+      const placeholder = 'SUBACCOUNT_ADDRESS=0xYOUR_SUBACCOUNT_ADDRESS_HERE';
+      const replacement = `SUBACCOUNT_ADDRESS=${subaccountAddress}`;
+      
+      if (envContent.includes(placeholder)) {
+        envContent = envContent.replace(placeholder, replacement);
+        fs.writeFileSync(envPath, envContent, 'utf8');
+        console.log('✅ Updated .env file successfully!');
+        console.log(`   SUBACCOUNT_ADDRESS=${subaccountAddress}\n`);
+      } else if (envContent.includes('SUBACCOUNT_ADDRESS=')) {
+        // Already has a value, update it
+        envContent = envContent.replace(
+          /SUBACCOUNT_ADDRESS=0x[a-fA-F0-9]+/,
+          replacement
+        );
+        fs.writeFileSync(envPath, envContent, 'utf8');
+        console.log('✅ Updated .env file with new subaccount address!');
+        console.log(`   SUBACCOUNT_ADDRESS=${subaccountAddress}\n`);
+      } else {
+        console.warn('⚠️ Could not find SUBACCOUNT_ADDRESS in .env file');
+        console.warn('   Please add manually:');
+        console.warn(`   SUBACCOUNT_ADDRESS=${subaccountAddress}\n`);
+      }
+    } catch (error) {
+      console.error('❌ Error updating .env file:', error);
+      console.log('\n📝 Please manually add to your .env file:');
+      console.log(`SUBACCOUNT_ADDRESS=${subaccountAddress}\n`);
+    }
     
     console.log('━'.repeat(80));
-    console.log('📝 Next Step: Add this to your .env file:');
+    console.log('🎉 Subaccount Creation Complete!');
     console.log('━'.repeat(80));
-    console.log(`SUBACCOUNT_ADDRESS=${primarySubaccount.subaccount_address}`);
+    console.log(`Subaccount Address: ${subaccountAddress}`);
     console.log('━'.repeat(80) + '\n');
     
-    console.log('🎉 Subaccount creation complete!\n');
     console.log('Next steps:');
-    console.log('  1. Add SUBACCOUNT_ADDRESS to your .env file (see above)');
     console.log('  2. Run: npm run mint-usdc          - Mint testnet USDC');
     console.log('  3. Run: npm run deposit-usdc       - Deposit USDC to subaccount');
     console.log('  4. Run: npm run place-order        - Place your first order\n');

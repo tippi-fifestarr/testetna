@@ -103,7 +103,7 @@ See the [source folder](./src/) for all the scripts `quick-win` is running, such
 
 ## Part 3: Mental Model & Architecture 🏗️
 
-Trading on Decibel has specific mechanics that differ from CEXs. Here are 3 key concepts for API traders.
+Trading on Decibel has specific mechanics that differ from CEXs and many DEXs.
 
 ### 1. The Two-Wallet Model
 Decibel uses a standard separation of concerns:

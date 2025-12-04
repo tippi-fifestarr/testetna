@@ -54,8 +54,13 @@ async function main() {
   
   const markets = await marketsResponse.json() as any[];
   
-  // Find the market we want to trade (or use from config)
-  const marketName = config.MARKET_NAME || 'BTC-PERP';
+  // =========================================================
+  // 🧠 BRAIN ON: CUSTOMIZE YOUR STRATEGY HERE
+  // =========================================================
+  
+  // 1. CHOOSE YOUR MARKET
+  // Run `npm run setup` to see the exact names of all available markets.
+  const marketName = config.MARKET_NAME || 'BTC-PERP'; 
   const market: MarketConfig = markets.find((m: any) => m.market_name === marketName);
   
   if (!market) {
@@ -70,10 +75,15 @@ async function main() {
   // Step 2: Define order parameters
   console.log('Step 2: Defining order parameters...');
   
-  // IMPORTANT: Adjust these values for your actual trade!
-  const userPrice = 50000;  // Price you want to buy/sell at
-  const userSize = 0.001;    // Size you want to trade (small for testing!)
-  const isBuy = true;        // true = buy, false = sell
+  // 2. SET YOUR ORDER DETAILS
+  // In a real bot, these values would come from your strategy logic.
+  const userPrice = 50000;   // The price you are willing to pay (Limit Price)
+  const userSize = 0.001;    // How much you want to buy/sell
+  const isBuy = true;        // true = Long (Buy), false = Short (Sell)
+
+  // =========================================================
+  // END CUSTOMIZATION
+  // =========================================================
   
   // Format price and size according to market rules
   const params = formatOrderParams(userPrice, userSize, market);

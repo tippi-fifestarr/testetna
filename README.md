@@ -15,19 +15,57 @@ Follow these steps exactly to get your first trade running.
 - [ ] [**Aptos CLI** (recommended)](https://aptos.dev/build/cli#-install-the-aptos-cli)
 
 ### 2. Get Your Credentials
+
+You need two things: an API Wallet (for signing transactions) and an API Key (for authenticated API requests).
+
+#### 2a. Create API Wallet
+
 1.  Go to [Decibel App (Staging)](https://app.decibel.trade/api).
 2.  Connect your Petra Wallet or "Continue with Google."
 3.  Click **"Create API Wallet"**.
 ![Create API Wallet Example](./create-api-wallet.png)
 4.  **Copy the Private Key** immediately (you only see it once).
+5.  Also save the **Wallet Address** shown on the same screen.
+
+#### 2b. Create API Key (Bearer Token)
+
+The API Key is used for authenticated requests to the Decibel REST API. You'll get this from Geomi (Aptos Build).
+
+1.  **Sign up or log in** at [geomi.dev](https://geomi.dev)
+    - Click "Continue with Google" or enter your email
+
+2.  **Create or select a project**
+    - If you're new, you'll see "No resources yet" - that's fine!
+    - Your project dashboard will show available resources
+
+3.  **Add an API Key resource**
+    ![Geomi Dashboard](./geomi-dashboard.png)
+    - Click the **"API Key"** card (find it under "Add more resources to your project")
+
+4.  **Fill out the API Key form:**
+    ![Create API Key Form](./create-api-key.png)
+    - **API Key Name:** Choose a name (e.g., `decibel` or `my-trading-bot`)
+    - **Network:** Select **"Decibel Devnet"** from the dropdown (important!)
+    - **Description:** Optional - add a note about what this key is for (150 chars max)
+    - **Client usage:** Leave this **OFF** (unless you're building a web/mobile app)
+    - Click **"Create New API Key"**
+
+5.  **Copy your Bearer Token**
+    ![Get Bearer Token](./get-bearer-token.png)
+    - After creation, you'll see your API key in the "API Keys" table
+    - Find the **"Key secret"** column - this is your Bearer token
+    - Click the copy icon next to the masked key (shows as `*****...*****`)
+    
+    **Important:** This is the value you'll use as `API_BEARER_TOKEN` in your `.env` file. It's the full Bearer token, not just the key name.
 
 ### 3. Configure the Project
+
 Run these commands in your terminal:
 
 ```bash
-# Clone the repo (probably should host it on aptos/decibel)
-git clone https://github.com/tippi-fifestarr/testetna/ 
-cd starter-kit
+# Clone the repo (we will have this on aptos/decibel eventually)
+git clone https://github.com/tippi-fifestarr/testetna.git
+cd testetna
 
 # Install dependencies
 npm install
@@ -40,7 +78,13 @@ Open `.env` and paste your credentials:
 ```env
 API_WALLET_PRIVATE_KEY=0xYOUR_COPIED_KEY_HERE
 API_WALLET_ADDRESS=0xYOUR_WALLET_ADDRESS_HERE
+API_BEARER_TOKEN=YOUR_BEARER_TOKEN_HERE
 ```
+
+**Quick checklist:**
+- [ ] `API_WALLET_PRIVATE_KEY` - From Decibel App (step 2a)
+- [ ] `API_WALLET_ADDRESS` - From Decibel App (step 2a)  
+- [ ] `API_BEARER_TOKEN` - Bearer token from Geomi (step 2b, "Key secret" column)
 
 ### 4. Run the "Quick Win"
 This script handles everything: funding (via private faucet), account creation, minting USDC, depositing, and placing a trade. It's running the scripts in `src/`.
@@ -59,18 +103,18 @@ Now that you have a working baseline, here is how to adapt this code for your ac
 
 ### How to Trade a Different Market
 Open [`src/4-place-order.ts`](./src/4-place-order.ts).
-Find the "Configuration" section (Line 47).
+Find the "Configuration" section (around line 63).
 
 **Change this:**
 ```typescript
-const marketName = config.MARKET_NAME || 'BTC-PERP';
+const marketName = config.MARKET_NAME || 'BTC/USD';
 ```
 
 **To this (example):**
 ```typescript
-const marketName = 'ETH-PERP'; // or SOL-PERP, APT-PERP
+const marketName = 'ETH/USD'; // or SOL/USD, APT/USD, etc.
 ```
-*Note: Run `npm run setup` to see a list of all available market names.*
+*Note: Run `npm run setup` to see a list of all available market names. Market names use the format `SYMBOL/USD` (not `SYMBOL-PERP`).*
 
 ### How to Change Your Order Logic
 Open [`src/4-place-order.ts`](./src/4-place-order.ts).
@@ -91,11 +135,24 @@ const userSize = riskManagementSize;
 const isBuy = signal === 'BULLISH';
 ```
 
-### How to Use a Different Account
+### How to Use a Different Subaccount
 If you want to use a specific subaccount (e.g., for a different strategy):
+
 1.  Create a new one: `npm run create-subaccount`
-2.  Update your `.env` file with the new `SUBACCOUNT_ADDRESS`.
+2.  The script automatically updates your `.env` file with the new `SUBACCOUNT_ADDRESS`.
 3.  Run `npm run deposit-usdc` to fund it.
+
+**How the subaccount script works:**
+- The script calls `create_new_subaccount`, which creates a **non-primary** subaccount (random address)
+- It then queries the API (with up to 5 retries) to get the subaccount address
+- It uses the **most recently created** subaccount from the API response
+- If the API fails after all retries, it falls back to the calculated **primary** subaccount address
+- The address is automatically written to your `.env` file
+
+**To manually select a different subaccount:**
+- After running `create-subaccount`, check the list of subaccounts it prints
+- Manually edit `.env` and set `SUBACCOUNT_ADDRESS` to the address you want
+- Or modify [`src/2-create-subaccount.ts`](./src/2-create-subaccount.ts) to change the selection logic (around line 129)
 
 See the [source folder](./src/) for all the scripts `quick-win` is running, such as [3-deposit-usdc](./src/3-deposit-usdc.ts) (used above). 
 
@@ -105,13 +162,23 @@ See the [source folder](./src/) for all the scripts `quick-win` is running, such
 
 Trading on Decibel has specific mechanics that differ from CEXs. Here are 3 key concepts for API traders.
 
-### 1. The Two-Wallet Model
-Decibel uses a standard separation of concerns:
+### 1. The Three-Tier Account Model
+Decibel uses a three-tier account structure for programmatic trading:
 
-*   **Main Wallet (Petra):** Holds APT for gas fees.
-*   **Subaccount:** Holds USDC for trading collateral.
+*   **Primary Wallet (Petra/Google):** Your login account. Used to access Decibel App and create API Wallets.
+*   **API Wallet:** A separate wallet you create at `app.decibel.trade/api` for programmatic trading. This wallet:
+    - Has its own address (e.g., `0x8096fc...`)
+    - Holds APT for gas fees
+    - Signs all your trading transactions
+    - This is what you set as `API_WALLET_ADDRESS` in your `.env` file
+*   **Subaccount:** A derived address calculated from your API Wallet. This account:
+    - Holds USDC for trading collateral
+    - Is automatically calculated and written to `.env` as `SUBACCOUNT_ADDRESS`
+    - Different address from your API Wallet
 
-**Flow:** Main Wallet -> Create Subaccount -> Deposit USDC -> Trade.
+**Flow:** Primary Wallet → Create API Wallet → Create Subaccount → Deposit USDC → Trade.
+
+**Note:** For programmatic traders, you primarily interact with the **API Wallet** (not the Primary Wallet). The Primary Wallet is just for logging in and creating API Wallets.
 
 ### 2. Async Execution (The Queue)
 Decibel is an on-chain CLOB.

@@ -14,7 +14,7 @@
  * - Response: openapi.json:922-997
  */
 
-import { config } from '../utils/config';
+import { config, authenticatedFetch } from '../utils/config';
 
 async function main() {
   console.log('🔍 Querying Order Status\n');
@@ -33,7 +33,7 @@ async function main() {
   
   if (!config.MARKET_ADDRESS) {
     console.warn('⚠️ MARKET_ADDRESS not set in .env');
-    console.warn('   Using BTC-PERP market, but this might not match your order\n');
+    console.warn('   Using BTC/USD market, but this might not match your order\n');
   }
   
   console.log(`Client Order ID: ${clientOrderId}`);
@@ -44,7 +44,7 @@ async function main() {
   
   if (!marketAddress) {
     console.log('Fetching markets to get market address...');
-    const marketsResponse = await fetch(`${config.REST_API_BASE_URL}/api/v1/markets`);
+    const marketsResponse = await authenticatedFetch(`${config.REST_API_BASE_URL}/api/v1/markets`);
     const markets = await marketsResponse.json() as any[];
     const marketName = config.MARKET_NAME || 'BTC/USD';
     const market = markets.find((m: any) => m.market_name === marketName);
@@ -62,7 +62,7 @@ async function main() {
   console.log(`URL: ${queryUrl.toString()}\n`);
   
   try {
-    const response = await fetch(queryUrl.toString());
+    const response = await authenticatedFetch(queryUrl.toString());
     
     if (!response.ok) {
       console.error(`❌ API returned ${response.status}: ${response.statusText}`);

@@ -24,7 +24,7 @@
  */
 
 import { createAptosClient, createAccount, waitForTransaction } from '../utils/client';
-import { config } from '../utils/config';
+import { config, authenticatedFetch } from '../utils/config';
 import { formatOrderParams, printOrderParams, MarketConfig } from '../utils/formatting';
 
 async function main() {
@@ -47,7 +47,7 @@ async function main() {
   // Step 1: Fetch market configuration
   console.log('Step 1: Fetching market configuration...');
   
-  const marketsResponse = await fetch(`${config.REST_API_BASE_URL}/api/v1/markets`);
+  const marketsResponse = await authenticatedFetch(`${config.REST_API_BASE_URL}/api/v1/markets`);
   if (!marketsResponse.ok) {
     throw new Error(`Failed to fetch markets: ${marketsResponse.statusText}`);
   }
@@ -60,7 +60,7 @@ async function main() {
   
   // 1. CHOOSE YOUR MARKET
   // Run `npm run setup` to see the exact names of all available markets.
-  const marketName = config.MARKET_NAME || 'BTC-PERP'; 
+  const marketName = config.MARKET_NAME || 'BTC/USD'; 
   const market: MarketConfig = markets.find((m: any) => m.market_name === marketName);
   
   if (!market) {

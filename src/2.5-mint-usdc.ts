@@ -12,17 +12,8 @@
  * - You CANNOT trade without USDC in your subaccount
  *
  * IMPORTANT: Based on Java example analysis
- * - Function: usdc::mint (NOT restricted_mint!)
- * - No 250 USDC limit on Netna staging
+ * - Function: usdc::mint (unrestricted, no limit on Netna staging)
  * - This is for testing only - production uses real USDC
- *
- * NOTE: There is also a restricted_mint function available:
- * - Function: usdc::restricted_mint
- * - Parameters: [amount] (no recipient address needed)
- * - Limit: 250 USDC maximum per account
- * - Use case: If you need restricted minting for testing limits
- * - To use it: Change function to `::usdc::restricted_mint`
- *   and remove the account address parameter
  */
 
 import { createAptosClient, createAccount, waitForTransaction } from '../utils/client';

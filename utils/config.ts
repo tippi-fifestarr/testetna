@@ -25,6 +25,7 @@ export const config = {
   // API Configuration
   REST_API_BASE_URL: process.env.REST_API_BASE_URL || 'https://api.netna.aptoslabs.com/decibel',
   WEBSOCKET_URL: process.env.WEBSOCKET_URL || 'wss://api.netna.aptoslabs.com/decibel/ws',
+  API_BEARER_TOKEN: process.env.API_BEARER_TOKEN || '', // Bearer token for authenticated API requests
   
   // Optional Configuration
   SUBACCOUNT_ADDRESS: process.env.SUBACCOUNT_ADDRESS || '',
@@ -52,6 +53,11 @@ export function validateConfig(): void {
     errors.push('⚠️ API_WALLET_PRIVATE_KEY should start with 0x');
   }
   
+  // API Bearer Token is required for REST API calls (get from geomi.dev)
+  if (!config.API_BEARER_TOKEN) {
+    errors.push('❌ API_BEARER_TOKEN is required in .env file (get from https://geomi.dev)');
+  }
+  
   if (errors.length > 0) {
     console.error('\n🚨 Configuration errors found:\n');
     errors.forEach(error => console.error(error));
@@ -72,6 +78,7 @@ export function printConfig(): void {
   console.log(`Private Key:        ${config.API_WALLET_PRIVATE_KEY ? '****' + config.API_WALLET_PRIVATE_KEY.slice(-8) : '❌ NOT SET'}`);
   console.log(`REST API:           ${config.REST_API_BASE_URL}`);
   console.log(`WebSocket:          ${config.WEBSOCKET_URL}`);
+  console.log(`API Bearer Token:   ${config.API_BEARER_TOKEN ? '****' + config.API_BEARER_TOKEN.slice(-8) : '❌ NOT SET'}`);
   
   if (config.SUBACCOUNT_ADDRESS) {
     console.log(`Subaccount:         ${config.SUBACCOUNT_ADDRESS}`);
@@ -80,4 +87,21 @@ export function printConfig(): void {
     console.log(`Market:             ${config.MARKET_NAME} (${config.MARKET_ADDRESS})`);
   }
   console.log('━'.repeat(60) + '\n');
+}
+
+/**
+ * Makes an authenticated fetch request to the Decibel API
+ * Automatically includes the Bearer token if API_BEARER_TOKEN is configured
+ */
+export async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(options.headers);
+  
+  if (config.API_BEARER_TOKEN) {
+    headers.set('Authorization', `Bearer ${config.API_BEARER_TOKEN}`);
+  }
+  
+  return fetch(url, {
+    ...options,
+    headers,
+  });
 }

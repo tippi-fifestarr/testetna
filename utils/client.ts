@@ -78,3 +78,19 @@ export function createObjectAddress(creatorAddress: string, seed: string): Accou
   
   return AccountAddress.from(hashHex);
 }
+
+/**
+ * Calculates the primary subaccount address deterministically
+ * Matches Java's getPrimarySubaccountAddr() implementation
+ * Formula: SHA3-256(accountAddress + "decibel_dex_primary" + 0xFE)
+ *
+ * @param accountAddress The wallet address that owns the subaccount
+ * @returns The derived primary subaccount address
+ */
+export function getPrimarySubaccountAddress(accountAddress: string | AccountAddress): AccountAddress {
+  const addressStr = typeof accountAddress === 'string' 
+    ? accountAddress 
+    : accountAddress.toString();
+  
+  return createObjectAddress(addressStr, 'decibel_dex_primary');
+}

@@ -7,12 +7,12 @@
     "fund-wallet": "ts-node src/0-fund-wallet.ts",
     "setup": "ts-node src/1-setup.ts",
     "create-subaccount": "ts-node src/2-create-subaccount.ts",
-    "mint-usdc": "ts-node src/2.5-mint-usdc.ts",
-    "deposit-usdc": "ts-node src/3-deposit-usdc.ts",
-    "place-order": "ts-node src/4-place-order.ts",
-    "query-order": "ts-node src/5-query-order.ts",
-    "websocket": "ts-node src/6-websocket-updates.ts",
-    "quick-win": "npm run fund-wallet && npm run setup && npm run create-subaccount && npm run mint-usdc && npm run deposit-usdc && npm run place-order",
+    "mint-usdc": "ts-node src/3-mint-usdc.ts",
+    "deposit-usdc": "ts-node src/4-deposit-usdc.ts",
+    "place-order": "ts-node src/5-place-order.ts",
+    "query-order": "ts-node src/6-query-order.ts",
+    "websocket": "ts-node src/7-websocket-updates.ts",
+    "quick-win": "QUICK_WIN_MODE=true npm run fund-wallet && QUICK_WIN_MODE=true npm run setup && QUICK_WIN_MODE=true npm run create-subaccount && QUICK_WIN_MODE=true npm run mint-usdc && QUICK_WIN_MODE=true npm run deposit-usdc && QUICK_WIN_MODE=true npm run place-order",
     "all": "npm run fund-wallet && npm run setup && npm run create-subaccount && npm run mint-usdc && npm run deposit-usdc"
   },
   "keywords": [

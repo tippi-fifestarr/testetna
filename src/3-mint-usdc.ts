@@ -1,5 +1,5 @@
 /**
- * Step 2.5: Mint Testnet USDC (CRITICAL STEP!)
+ * Step 3: Mint Testnet USDC (CRITICAL STEP!)
  *
  * This script:
  * 1. Mints testnet USDC for trading collateral
@@ -98,9 +98,12 @@ async function main() {
     console.log(`You now have ${USDC_AMOUNT} USDC in your account.`);
     console.log('This USDC is for trading collateral (NOT the same as APT gas fees).\n');
     
-    console.log('Next steps:');
-    console.log('  1. Run: npm run deposit-usdc    - Deposit USDC to your subaccount');
-    console.log('  2. Run: npm run place-order     - Place your first order\n');
+    const QUICK_WIN_MODE = process.env.QUICK_WIN_MODE === 'true';
+    if (!QUICK_WIN_MODE) {
+      console.log('Next steps:');
+      console.log('  1. Run: npm run deposit-usdc    - Deposit USDC to your subaccount');
+      console.log('  2. Run: npm run place-order     - Place your first order\n');
+    }
     
     console.log('💡 Remember:');
     console.log('   - APT = Gas fees for transactions');

@@ -31,12 +31,14 @@ export function createAccount(): Ed25519Account {
 
 /**
  * Helper to wait for transaction confirmation with better error handling
+ * Returns the committed transaction response for event extraction
  */
-export async function waitForTransaction(aptos: Aptos, txHash: string): Promise<void> {
+export async function waitForTransaction(aptos: Aptos, txHash: string): Promise<any> {
   try {
     console.log(`⏳ Waiting for transaction: ${txHash}`);
-    await aptos.waitForTransaction({ transactionHash: txHash });
+    const committed = await aptos.waitForTransaction({ transactionHash: txHash });
     console.log(`✅ Transaction confirmed: ${txHash}`);
+    return committed;
   } catch (error) {
     console.error(`❌ Transaction failed: ${txHash}`);
     throw error;

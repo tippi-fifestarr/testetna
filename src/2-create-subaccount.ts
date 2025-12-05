@@ -60,25 +60,45 @@ async function main() {
   console.log(`📝 Transaction hash: ${pendingTransaction.hash}`);
   console.log(`🔗 View on explorer: https://explorer.aptoslabs.com/txn/${pendingTransaction.hash}\n`);
   
-  // Step 4: Wait for confirmation
+  // Step 4: Wait for confirmation and extract subaccount from events
   console.log('Step 4: Waiting for transaction confirmation...');
   console.log('   (This usually takes 2-5 seconds)\n');
   
-  await waitForTransaction(aptos, pendingTransaction.hash);
+  const committedTx = await waitForTransaction(aptos, pendingTransaction.hash);
   
   console.log('✅ Subaccount created successfully!\n');
   
-  // Step 5: Calculate primary subaccount address deterministically (as fallback)
-  console.log('Step 5: Calculating primary subaccount address (fallback)...');
-  const calculatedSubaccountAddress = getPrimarySubaccountAddress(account.accountAddress);
-  console.log(`✅ Primary subaccount address: ${calculatedSubaccountAddress.toString()}`);
-  console.log('   (This is a fallback - we\'ll use the API response if available)\n');
+  // Step 5: Extract subaccount address from transaction events (most reliable)
+  console.log('Step 5: Extracting subaccount address from transaction events...');
   
-  // Step 6: Retrieve subaccount address via API (with retries)
-  console.log('Step 6: Retrieving subaccount address via API...');
+  let subaccountFromEvent: string | null = null;
+  if ('events' in committedTx && Array.isArray(committedTx.events)) {
+    for (const event of committedTx.events) {
+      if (event.type && event.type.includes('::dex_accounts::SubaccountCreatedEvent')) {
+        const eventData = event.data as any;
+        if (eventData.owner === account.accountAddress.toString()) {
+          subaccountFromEvent = eventData.subaccount;
+          break;
+        }
+      }
+    }
+  }
+  
+  if (subaccountFromEvent) {
+    console.log(`✅ Extracted subaccount from transaction: ${subaccountFromEvent}`);
+    console.log('   (This is the exact subaccount created in this transaction)\n');
+  } else {
+    console.log('⚠️ Could not extract subaccount from events, will use API as fallback\n');
+  }
+  
+  // Step 6: Calculate primary subaccount address (for comparison only)
+  const calculatedSubaccountAddress = getPrimarySubaccountAddress(account.accountAddress);
+  
+  // Step 7: Retrieve subaccount address via API (for verification and listing)
+  console.log('Step 7: Retrieving subaccount details via API...');
   console.log('   (This may take a few seconds for the indexer to catch up)\n');
   
-  let subaccountAddress = calculatedSubaccountAddress.toString(); // Fallback
+  let subaccountAddress = subaccountFromEvent || calculatedSubaccountAddress.toString(); // Use event first
   let verifiedViaAPI = false;
   const MAX_RETRIES = 5;
   
@@ -121,34 +141,43 @@ async function main() {
       
       console.log(`✅ Found ${subaccounts.length} subaccount(s) via API:\n`);
       
+      // Find the subaccount we just created (from event) in the API response
+      const createdSubaccount = subaccountFromEvent 
+        ? subaccounts.find((s: any) => s.subaccount_address.toLowerCase() === subaccountFromEvent.toLowerCase())
+        : null;
+      
+      // Show all subaccounts, highlighting the one we just created
       subaccounts.forEach((sub: any, index: number) => {
-        console.log(`Subaccount #${index + 1}:`);
+        const isJustCreated = createdSubaccount && sub.subaccount_address === createdSubaccount.subaccount_address;
+        const marker = isJustCreated ? ' ⭐ (just created)' : '';
+        console.log(`Subaccount #${index + 1}:${marker}`);
         console.log(`  Address:     ${sub.subaccount_address}`);
         console.log(`  Is Primary:  ${sub.is_primary}`);
         console.log(`  Is Active:   ${sub.is_active}`);
         console.log(`  Label:       ${sub.custom_label || '(none)'}\n`);
       });
       
-      // Use the most recently created non-primary subaccount (the one we just created)
-      // create_new_subaccount creates non-primary subaccounts, so filter those out
-      // API typically returns subaccounts in creation order, so first non-primary is likely the newest
-      const nonPrimarySubaccounts = subaccounts.filter((s: any) => !s.is_primary);
-      const mostRecentSubaccount = nonPrimarySubaccounts.length > 0 
-        ? nonPrimarySubaccounts[0]  // First non-primary (most recently created)
-        : subaccounts[0];  // Fallback to first if somehow all are primary
-      
-      const apiSubaccountAddress = mostRecentSubaccount.subaccount_address;
-      
-      // Use API address as source of truth
-      subaccountAddress = apiSubaccountAddress;
-      verifiedViaAPI = true;
-      
-      console.log(`✅ Using subaccount from API: ${apiSubaccountAddress}`);
-      if (apiSubaccountAddress.toLowerCase() !== calculatedSubaccountAddress.toString().toLowerCase()) {
-        console.log(`   (Note: This is a non-primary subaccount created by create_new_subaccount)`);
-        console.log(`   (Primary subaccount would be: ${calculatedSubaccountAddress.toString()})\n`);
+      // Use event address as source of truth, verify with API
+      if (createdSubaccount) {
+        subaccountAddress = createdSubaccount.subaccount_address;
+        verifiedViaAPI = true;
+        console.log(`✅ Verified: Subaccount from transaction matches API`);
+        console.log(`   Address: ${subaccountAddress}\n`);
+      } else if (subaccountFromEvent) {
+        // Event address exists but not in API yet (indexer lag)
+        subaccountAddress = subaccountFromEvent;
+        console.log(`✅ Using subaccount from transaction event: ${subaccountAddress}`);
+        console.log(`   (Not yet in API - indexer may need more time)\n`);
       } else {
-        console.log('   (Matches calculated primary subaccount address)\n');
+        // Fallback: use first non-primary from API
+        const nonPrimarySubaccounts = subaccounts.filter((s: any) => !s.is_primary);
+        const fallbackSubaccount = nonPrimarySubaccounts.length > 0 
+          ? nonPrimarySubaccounts[0]
+          : subaccounts[0];
+        subaccountAddress = fallbackSubaccount.subaccount_address;
+        verifiedViaAPI = true;
+        console.log(`✅ Using subaccount from API: ${subaccountAddress}`);
+        console.log(`   (Could not extract from transaction events)\n`);
       }
       
       break; // Success, exit retry loop
@@ -164,8 +193,8 @@ async function main() {
     }
   }
     
-  // Step 7: Update .env file with subaccount address
-  console.log('Step 7: Updating .env file with subaccount address...\n');
+  // Step 8: Update .env file with subaccount address
+  console.log('Step 8: Updating .env file with subaccount address...\n');
   
   try {
     const envPath = path.join(__dirname, '../.env');
@@ -208,10 +237,13 @@ async function main() {
   }
   console.log('━'.repeat(80) + '\n');
   
-  console.log('Next steps:');
-  console.log('  1. Run: npm run mint-usdc          - Mint testnet USDC');
-  console.log('  2. Run: npm run deposit-usdc       - Deposit USDC to subaccount');
-  console.log('  3. Run: npm run place-order        - Place your first order\n');
+  const QUICK_WIN_MODE = process.env.QUICK_WIN_MODE === 'true';
+  if (!QUICK_WIN_MODE) {
+    console.log('Next steps:');
+    console.log('  1. Run: npm run mint-usdc          - Mint testnet USDC');
+    console.log('  2. Run: npm run deposit-usdc       - Deposit USDC to subaccount');
+    console.log('  3. Run: npm run place-order        - Place your first order\n');
+  }
 }
 
 // Run the script

@@ -111,10 +111,13 @@ async function main() {
       console.log('   - USDC = Trading collateral (you\'ll mint this next)');
       console.log('   - You need BOTH to trade!\n');
       
-      console.log('Next steps:');
-      console.log('  1. Run: npm run create-subaccount  - Create trading subaccount');
-      console.log('  2. Run: npm run mint-usdc          - Mint USDC collateral');
-      console.log('  3. Run: npm run deposit-usdc       - Deposit to subaccount\n');
+      const QUICK_WIN_MODE = process.env.QUICK_WIN_MODE === 'true';
+      if (!QUICK_WIN_MODE) {
+        console.log('Next steps:');
+        console.log('  1. Run: npm run create-subaccount  - Create trading subaccount');
+        console.log('  2. Run: npm run mint-usdc          - Mint USDC collateral');
+        console.log('  3. Run: npm run deposit-usdc       - Deposit to subaccount\n');
+      }
     } else {
       console.warn('⚠️ Balance is still 0. Possible reasons:');
       console.warn('  1. Blockchain needs more time (wait 10 seconds and check again)');

@@ -1,5 +1,5 @@
 /**
- * Step 5: Query Order Status
+ * Step 6: Query Order Status
  * 
  * This script:
  * 1. Queries order status via REST API

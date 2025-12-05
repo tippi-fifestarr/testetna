@@ -1,5 +1,5 @@
 /**
- * Step 4: Place Your First Order
+ * Step 5: Place Your First Order
  * 
  * This script:
  * 1. Fetches market configuration
@@ -9,8 +9,8 @@
  * 
  * Prerequisites:
  * - Subaccount created (Step 2)
- * - USDC minted (Step 2.5)
- * - USDC deposited to subaccount (Step 3)
+ * - USDC minted (Step 3)
+ * - USDC deposited to subaccount (Step 4)
  * 
  * Documentation:
  * - Function: place-order.mdx:9 (dex_accounts::place_order_to_subaccount)
@@ -90,6 +90,7 @@ async function main() {
   printOrderParams(params, market);
   
   // Step 3: Generate client_order_id for tracking
+  console.log('Step 3: Generating client order ID...');
   const clientOrderId = `order-${Date.now()}`;
   console.log(`📝 Client Order ID: ${clientOrderId}`);
   console.log('   (Use this to query order status later)\n');
@@ -168,12 +169,15 @@ async function main() {
     
     console.log('💡 Save this Client Order ID for querying: ' + clientOrderId + '\n');
     
-    console.log('Next steps:');
-    console.log('  1. Run: npm run query-order    - Check order status');
-    console.log('  2. Run: npm run websocket       - Watch live updates\n');
-    
-    console.log('To query this specific order, use:');
-    console.log(`CLIENT_ORDER_ID="${clientOrderId}" npm run query-order\n`);
+    const QUICK_WIN_MODE = process.env.QUICK_WIN_MODE === 'true';
+    if (!QUICK_WIN_MODE) {
+      console.log('Next steps:');
+      console.log('  1. Run: npm run query-order    - Check order status');
+      console.log('  2. Run: npm run websocket       - Watch live updates\n');
+      
+      console.log('To query this specific order, use:');
+      console.log(`CLIENT_ORDER_ID="${clientOrderId}" npm run query-order\n`);
+    }
     
   } catch (error: any) {
     console.error('❌ Error placing order:', error);

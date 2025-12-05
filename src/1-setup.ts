@@ -159,13 +159,19 @@ async function main() {
   console.log('✅ Markets API accessible');
   console.log('✅ WebSocket server reachable');
   console.log('='.repeat(80));
-  console.log('\n🎉 Setup complete! You\'re ready for the next steps:\n');
-  console.log('  1. npm run create-subaccount  - Create a trading subaccount');
-  console.log('  2. npm run mint-usdc          - Mint testnet USDC');
-  console.log('  3. npm run deposit-usdc       - Deposit USDC to subaccount');
-  console.log('  4. npm run place-order        - Place your first order');
-  console.log('  5. npm run query-order        - Check order status');
-  console.log('  6. npm run websocket          - Watch live updates\n');
+  
+  const QUICK_WIN_MODE = process.env.QUICK_WIN_MODE === 'true';
+  if (!QUICK_WIN_MODE) {
+    console.log('\n🎉 Setup complete! You\'re ready for the next steps:\n');
+    console.log('  1. npm run create-subaccount  - Create a trading subaccount');
+    console.log('  2. npm run mint-usdc          - Mint testnet USDC');
+    console.log('  3. npm run deposit-usdc       - Deposit USDC to subaccount');
+    console.log('  4. npm run place-order        - Place your first order');
+    console.log('  5. npm run query-order        - Check order status');
+    console.log('  6. npm run websocket          - Watch live updates\n');
+  } else {
+    console.log('\n🎉 Setup complete!\n');
+  }
 }
 
 // Run the script

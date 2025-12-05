@@ -29,27 +29,18 @@ async function main() {
   // Step 1: Check current balance
   console.log('Step 1: Checking current APT balance...');
   
+  let currentBalance = 0;
   try {
-    const resources = await aptos.getAccountResources({
+    const balance = await aptos.getAccountAPTAmount({
       accountAddress: account.accountAddress,
     });
     
-    const aptResource = resources.find(
-      (r) => r.type === '0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>'
-    );
-    
-    const currentBalance = aptResource 
-      ? Number((aptResource.data as any).coin.value) / 100000000
-      : 0;
-    
+    currentBalance = balance / 100_000_000; // Convert octas to APT
     console.log(`✅ Current balance: ${currentBalance.toFixed(4)} APT\n`);
     
     if (currentBalance >= 1) {
       console.log('ℹ️ You already have sufficient APT for transactions.');
       console.log('   Skipping faucet request.\n');
-      console.log('If you need more APT, you can:');
-      console.log('  1. Delete this check and run again');
-      console.log('  2. Call the faucet manually\n');
       return;
     }
     
@@ -70,25 +61,43 @@ async function main() {
     
     console.log('✅ Faucet request successful!\n');
     
-    // Step 3: Verify new balance
+    // Step 3: Verify new balance (with retries)
     console.log('Step 3: Verifying new balance...');
-    console.log('   (Waiting 3 seconds for blockchain confirmation...)\n');
+    console.log('   (Waiting for blockchain confirmation...)\n');
     
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    let newBalance = 0;
+    const MAX_RETRIES = 5;
     
-    const resourcesAfter = await aptos.getAccountResources({
-      accountAddress: account.accountAddress,
-    });
-    
-    const aptResourceAfter = resourcesAfter.find(
-      (r) => r.type === '0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>'
-    );
-    
-    const newBalance = aptResourceAfter
-      ? Number((aptResourceAfter.data as any).coin.value) / 100000000
-      : 0;
-    
-    console.log(`✅ New balance: ${newBalance.toFixed(4)} APT\n`);
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      const delay = attempt * 2000; // 2s, 4s, 6s, 8s, 10s
+      if (attempt > 1) {
+        console.log(`   Retry attempt ${attempt}/${MAX_RETRIES} (waiting ${delay/1000}s...)\n`);
+      }
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      try {
+        const balance = await aptos.getAccountAPTAmount({
+          accountAddress: account.accountAddress,
+        });
+        
+        newBalance = balance / 100_000_000; // Convert octas to APT
+        
+        if (newBalance > currentBalance) {
+          console.log(`✅ New balance: ${newBalance.toFixed(4)} APT\n`);
+          break; // Success, exit retry loop
+        } else if (attempt < MAX_RETRIES) {
+          continue; // Retry
+        } else {
+          console.log(`⚠️ Balance check: ${newBalance.toFixed(4)} APT (may need more time)\n`);
+        }
+      } catch (error) {
+        if (attempt === MAX_RETRIES) {
+          console.warn('⚠️ Could not verify balance after all retries.');
+          console.warn('   The faucet request was successful, but balance check failed.\n');
+        }
+        // Continue to next retry
+      }
+    }
     
     if (newBalance > 0) {
       console.log('━'.repeat(80));
@@ -102,10 +111,13 @@ async function main() {
       console.log('   - USDC = Trading collateral (you\'ll mint this next)');
       console.log('   - You need BOTH to trade!\n');
       
-      console.log('Next steps:');
-      console.log('  1. Run: npm run create-subaccount  - Create trading subaccount');
-      console.log('  2. Run: npm run mint-usdc          - Mint USDC collateral');
-      console.log('  3. Run: npm run deposit-usdc       - Deposit to subaccount\n');
+      const QUICK_WIN_MODE = process.env.QUICK_WIN_MODE === 'true';
+      if (!QUICK_WIN_MODE) {
+        console.log('Next steps:');
+        console.log('  1. Run: npm run create-subaccount  - Create trading subaccount');
+        console.log('  2. Run: npm run mint-usdc          - Mint USDC collateral');
+        console.log('  3. Run: npm run deposit-usdc       - Deposit to subaccount\n');
+      }
     } else {
       console.warn('⚠️ Balance is still 0. Possible reasons:');
       console.warn('  1. Blockchain needs more time (wait 10 seconds and check again)');

@@ -1,5 +1,5 @@
 /**
- * Step 6: Watch Live Order Updates via WebSocket
+ * Step 7: Watch Live Order Updates via WebSocket
  * 
  * This script:
  * 1. Connects to Decibel WebSocket server

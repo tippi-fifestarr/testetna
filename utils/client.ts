@@ -31,12 +31,14 @@ export function createAccount(): Ed25519Account {
 
 /**
  * Helper to wait for transaction confirmation with better error handling
+ * Returns the committed transaction response for event extraction
  */
-export async function waitForTransaction(aptos: Aptos, txHash: string): Promise<void> {
+export async function waitForTransaction(aptos: Aptos, txHash: string): Promise<any> {
   try {
     console.log(`⏳ Waiting for transaction: ${txHash}`);
-    await aptos.waitForTransaction({ transactionHash: txHash });
+    const committed = await aptos.waitForTransaction({ transactionHash: txHash });
     console.log(`✅ Transaction confirmed: ${txHash}`);
+    return committed;
   } catch (error) {
     console.error(`❌ Transaction failed: ${txHash}`);
     throw error;
@@ -77,4 +79,20 @@ export function createObjectAddress(creatorAddress: string, seed: string): Accou
   const hashHex = '0x' + Buffer.from(hash).toString('hex');
   
   return AccountAddress.from(hashHex);
+}
+
+/**
+ * Calculates the primary subaccount address deterministically
+ * Matches Java's getPrimarySubaccountAddr() implementation
+ * Formula: SHA3-256(accountAddress + "decibel_dex_primary" + 0xFE)
+ *
+ * @param accountAddress The wallet address that owns the subaccount
+ * @returns The derived primary subaccount address
+ */
+export function getPrimarySubaccountAddress(accountAddress: string | AccountAddress): AccountAddress {
+  const addressStr = typeof accountAddress === 'string' 
+    ? accountAddress 
+    : accountAddress.toString();
+  
+  return createObjectAddress(addressStr, 'decibel_dex_primary');
 }

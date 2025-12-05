@@ -13,7 +13,7 @@
  */
 
 import { createAptosClient, createAccount } from '../utils/client';
-import { config, validateConfig, printConfig } from '../utils/config';
+import { config, validateConfig, printConfig, authenticatedFetch } from '../utils/config';
 
 async function main() {
   console.log('🚀 Decibel Setup & Connection Test\n');
@@ -61,7 +61,7 @@ async function main() {
   // Step 4: Fetch available markets
   console.log('Step 4: Fetching available markets...');
   try {
-    const response = await fetch(`${config.REST_API_BASE_URL}/api/v1/markets`);
+    const response = await authenticatedFetch(`${config.REST_API_BASE_URL}/api/v1/markets`);
     
     if (!response.ok) {
       throw new Error(`API returned ${response.status}: ${response.statusText}`);
@@ -89,11 +89,26 @@ async function main() {
     }
     console.log('━'.repeat(80) + '\n');
     
-    // Show example market config
+    // Show market config (use configured market if available, otherwise show example)
     if (markets.length > 0) {
-      const btcPerp = markets.find((m: any) => m.market_name === 'BTC-PERP') || markets[0];
-      console.log('📊 Example Market Config (BTC-PERP):');
-      console.log(JSON.stringify(btcPerp, null, 2));
+      let marketToShow;
+      
+      // Try to find the configured market first
+      if (config.MARKET_NAME) {
+        marketToShow = markets.find((m: any) => m.market_name === config.MARKET_NAME);
+      }
+      
+      // If not found or not configured, use BTC/USD as example, or first market
+      if (!marketToShow) {
+        marketToShow = markets.find((m: any) => m.market_name === 'BTC/USD') || markets[0];
+      }
+      
+      const label = marketToShow.market_name === config.MARKET_NAME 
+        ? `Market Config (${marketToShow.market_name})`
+        : `Example Market Config (${marketToShow.market_name})`;
+      
+      console.log(`📊 ${label}:`);
+      console.log(JSON.stringify(marketToShow, null, 2));
       console.log();
     }
     
@@ -144,13 +159,19 @@ async function main() {
   console.log('✅ Markets API accessible');
   console.log('✅ WebSocket server reachable');
   console.log('='.repeat(80));
-  console.log('\n🎉 Setup complete! You\'re ready for the next steps:\n');
-  console.log('  1. npm run create-subaccount  - Create a trading subaccount');
-  console.log('  2. npm run mint-usdc          - Mint testnet USDC (250 max)');
-  console.log('  3. npm run deposit-usdc       - Deposit USDC to subaccount');
-  console.log('  4. npm run place-order        - Place your first order');
-  console.log('  5. npm run query-order        - Check order status');
-  console.log('  6. npm run websocket          - Watch live updates\n');
+  
+  const QUICK_WIN_MODE = process.env.QUICK_WIN_MODE === 'true';
+  if (!QUICK_WIN_MODE) {
+    console.log('\n🎉 Setup complete! You\'re ready for the next steps:\n');
+    console.log('  1. npm run create-subaccount  - Create a trading subaccount');
+    console.log('  2. npm run mint-usdc          - Mint testnet USDC');
+    console.log('  3. npm run deposit-usdc       - Deposit USDC to subaccount');
+    console.log('  4. npm run place-order        - Place your first order');
+    console.log('  5. npm run query-order        - Check order status');
+    console.log('  6. npm run websocket          - Watch live updates\n');
+  } else {
+    console.log('\n🎉 Setup complete!\n');
+  }
 }
 
 // Run the script

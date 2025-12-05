@@ -1,5 +1,5 @@
 /**
- * Step 3: Deposit USDC to Subaccount (CRITICAL STEP!)
+ * Step 4: Deposit USDC to Subaccount (CRITICAL STEP!)
  * 
  * This script:
  * 1. Deposits USDC from your main account to your subaccount
@@ -8,7 +8,7 @@
  * 
  * Prerequisites:
  * - You must have a subaccount created (Step 2)
- * - You must have USDC minted (Step 2.5)
+ * - You must have USDC minted (Step 3)
  * - SUBACCOUNT_ADDRESS must be set in .env
  * 
  * Documentation:
@@ -157,10 +157,13 @@ async function main() {
     console.log(`Your subaccount now has ${DEPOSIT_AMOUNT} USDC available as trading collateral.`);
     console.log('You are ready to place orders!\n');
     
-    console.log('Next steps:');
-    console.log('  1. Run: npm run place-order     - Place your first order');
-    console.log('  2. Run: npm run query-order     - Check order status');
-    console.log('  3. Run: npm run websocket       - Watch live updates\n');
+    const QUICK_WIN_MODE = process.env.QUICK_WIN_MODE === 'true';
+    if (!QUICK_WIN_MODE) {
+      console.log('Next steps:');
+      console.log('  1. Run: npm run place-order     - Place your first order');
+      console.log('  2. Run: npm run query-order     - Check order status');
+      console.log('  3. Run: npm run websocket       - Watch live updates\n');
+    }
     
   } catch (error: any) {
     console.error('❌ Error depositing USDC:', error);

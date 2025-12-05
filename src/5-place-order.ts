@@ -1,5 +1,5 @@
 /**
- * Step 4: Place Your First Order
+ * Step 5: Place Your First Order
  * 
  * This script:
  * 1. Fetches market configuration
@@ -9,8 +9,8 @@
  * 
  * Prerequisites:
  * - Subaccount created (Step 2)
- * - USDC minted (Step 2.5)
- * - USDC deposited to subaccount (Step 3)
+ * - USDC minted (Step 3)
+ * - USDC deposited to subaccount (Step 4)
  * 
  * Documentation:
  * - Function: place-order.mdx:9 (dex_accounts::place_order_to_subaccount)
@@ -24,7 +24,7 @@
  */
 
 import { createAptosClient, createAccount, waitForTransaction } from '../utils/client';
-import { config } from '../utils/config';
+import { config, authenticatedFetch } from '../utils/config';
 import { formatOrderParams, printOrderParams, MarketConfig } from '../utils/formatting';
 
 async function main() {
@@ -47,7 +47,7 @@ async function main() {
   // Step 1: Fetch market configuration
   console.log('Step 1: Fetching market configuration...');
   
-  const marketsResponse = await fetch(`${config.REST_API_BASE_URL}/api/v1/markets`);
+  const marketsResponse = await authenticatedFetch(`${config.REST_API_BASE_URL}/api/v1/markets`);
   if (!marketsResponse.ok) {
     throw new Error(`Failed to fetch markets: ${marketsResponse.statusText}`);
   }
@@ -60,7 +60,7 @@ async function main() {
   
   // 1. CHOOSE YOUR MARKET
   // Run `npm run setup` to see the exact names of all available markets.
-  const marketName = config.MARKET_NAME || 'BTC-PERP'; 
+  const marketName = config.MARKET_NAME || 'BTC/USD'; 
   const market: MarketConfig = markets.find((m: any) => m.market_name === marketName);
   
   if (!market) {
@@ -90,6 +90,7 @@ async function main() {
   printOrderParams(params, market);
   
   // Step 3: Generate client_order_id for tracking
+  console.log('Step 3: Generating client order ID...');
   const clientOrderId = `order-${Date.now()}`;
   console.log(`📝 Client Order ID: ${clientOrderId}`);
   console.log('   (Use this to query order status later)\n');
@@ -168,12 +169,15 @@ async function main() {
     
     console.log('💡 Save this Client Order ID for querying: ' + clientOrderId + '\n');
     
-    console.log('Next steps:');
-    console.log('  1. Run: npm run query-order    - Check order status');
-    console.log('  2. Run: npm run websocket       - Watch live updates\n');
-    
-    console.log('To query this specific order, use:');
-    console.log(`CLIENT_ORDER_ID="${clientOrderId}" npm run query-order\n`);
+    const QUICK_WIN_MODE = process.env.QUICK_WIN_MODE === 'true';
+    if (!QUICK_WIN_MODE) {
+      console.log('Next steps:');
+      console.log('  1. Run: npm run query-order    - Check order status');
+      console.log('  2. Run: npm run websocket       - Watch live updates\n');
+      
+      console.log('To query this specific order, use:');
+      console.log(`CLIENT_ORDER_ID="${clientOrderId}" npm run query-order\n`);
+    }
     
   } catch (error: any) {
     console.error('❌ Error placing order:', error);

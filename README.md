@@ -102,7 +102,7 @@ npm run quick-win
 Now that you have a working baseline, here is how to adapt this code for your actual strategy.
 
 ### How to Trade a Different Market
-Open [`src/4-place-order.ts`](./src/4-place-order.ts).
+Open [`src/5-place-order.ts`](./src/5-place-order.ts).
 Find the "Configuration" section (around line 63).
 
 **Change this:**
@@ -117,7 +117,7 @@ const marketName = 'ETH/USD'; // or SOL/USD, APT/USD, etc.
 *Note: Run `npm run setup` to see a list of all available market names. Market names use the format `SYMBOL/USD` (not `SYMBOL-PERP`).*
 
 ### How to Change Your Order Logic
-Open [`src/4-place-order.ts`](./src/4-place-order.ts).
+Open [`src/5-place-order.ts`](./src/5-place-order.ts).
 Find the "Order Parameters" section.
 
 **Change this:**
@@ -135,26 +135,34 @@ const userSize = riskManagementSize;
 const isBuy = signal === 'BULLISH';
 ```
 
-### How to Use a Different Subaccount
-If you want to use a specific subaccount (e.g., for a different strategy):
+### Focus on Order Management
+
+After running `quick-win`, you have a funded trading subaccount ready to use. You can now focus on:
+
+- [`src/5-place-order.ts`](./src/5-place-order.ts) - Customize your trading strategy
+- [`src/6-query-order.ts`](./src/6-query-order.ts) - Check order status
+
+You don't need to create a new trading subaccount for every trade. Once you have USDC deposited (from `quick-win`), you can run `5-place-order` and `6-query` repeatedly using the same subaccount.
+
+### How to Use a Different Trading Subaccount
+If you want to use a specific trading subaccount (e.g., for a different strategy):
 
 1.  Create a new one: `npm run create-subaccount`
 2.  The script automatically updates your `.env` file with the new `SUBACCOUNT_ADDRESS`.
 3.  Run `npm run deposit-usdc` to fund it.
 
-**How the subaccount script works:**
-- The script calls `create_new_subaccount`, which creates a **non-primary** subaccount (random address)
-- It then queries the API (with up to 5 retries) to get the subaccount address
-- It uses the **most recently created** subaccount from the API response
-- If the API fails after all retries, it falls back to the calculated **primary** subaccount address
+**How the trading subaccount script works:**
+- The script calls `create_new_subaccount`, which creates a non-primary trading subaccount (random address, cannot be calculated)
+- It extracts the subaccount address directly from the `SubaccountCreatedEvent` in the transaction events
+- It then verifies the address via the API (with up to 5 retries to account for indexer lag)
 - The address is automatically written to your `.env` file
 
-**To manually select a different subaccount:**
-- After running `create-subaccount`, check the list of subaccounts it prints
+**To manually select a different trading subaccount:**
+- After running `create-subaccount`, check the list of trading subaccounts it prints
 - Manually edit `.env` and set `SUBACCOUNT_ADDRESS` to the address you want
-- Or modify [`src/2-create-subaccount.ts`](./src/2-create-subaccount.ts) to change the selection logic (around line 129)
+- Or modify [`src/2-create-subaccount.ts`](./src/2-create-subaccount.ts) to change the selection logic
 
-See the [source folder](./src/) for all the scripts `quick-win` is running, such as [3-deposit-usdc](./src/3-deposit-usdc.ts) (used above). 
+See the [source folder](./src/) for all the scripts `quick-win` is running, such as [4-deposit-usdc](./src/4-deposit-usdc.ts) (used above). 
 
 ---
 
@@ -165,20 +173,21 @@ Trading on Decibel has specific mechanics that differ from CEXs and many DEXs.
 ### 1. The Three-Tier Account Model
 Decibel uses a three-tier account structure for programmatic trading:
 
-*   **Primary Wallet (Petra/Google):** Your login account. Used to access Decibel App and create API Wallets.
+*   **Primary Wallet (Wallet Account):** Your login account. Used to access Decibel App and create API Wallets.
 *   **API Wallet:** A separate wallet you create at `app.decibel.trade/api` for programmatic trading. This wallet:
     - Has its own address (e.g., `0x8096fc...`)
     - Holds APT for gas fees
     - Signs all your trading transactions
     - This is what you set as `API_WALLET_ADDRESS` in your `.env` file
-*   **Subaccount:** A derived address calculated from your API Wallet. This account:
+*   **Trading Subaccount:** A trading account created from your API Wallet. This account:
     - Holds USDC for trading collateral
-    - Is automatically calculated and written to `.env` as `SUBACCOUNT_ADDRESS`
+    - Created via `create_new_subaccount` (creates a non-primary subaccount with a random address)
+    - The address is automatically extracted from transaction events and written to `.env` as `SUBACCOUNT_ADDRESS`
     - Different address from your API Wallet
 
-**Flow:** Primary Wallet → Create API Wallet → Create Subaccount → Deposit USDC → Trade.
+**Flow:** Primary Wallet → Create API Wallet → Create Trading Subaccount → Deposit USDC → Trade.
 
-**Note:** For programmatic traders, you primarily interact with the **API Wallet** (not the Primary Wallet). The Primary Wallet is just for logging in and creating API Wallets.
+**Note:** For programmatic traders, you primarily interact with the API Wallet (not the Primary Wallet). The Primary Wallet is just for logging in and creating API Wallets. Most users will have a single trading subaccount, though you can create multiple if needed for different strategies.
 
 ### 2. Async Execution (The Queue)
 Decibel is an on-chain CLOB.
@@ -212,7 +221,7 @@ For Market Makers and HFTs:
 ## Part 4: What's Next? 🚀
 
 1.  **Monitor Risk:** Build a script to track `Unrealized PnL` + `Accrued Funding` to avoid liquidation.
-2.  **Market Making:** Use `src/6-websocket-updates.ts` to listen to the orderbook and place Maker orders.
+2.  **Market Making:** Use [`src/7-websocket-updates.ts`](./src/7-websocket-updates.ts) to listen to the orderbook and place Maker orders.
 3.  **Explore Order Types:** Look into `Post-Only` and `Reduce-Only` params in the API docs for advanced control.
 
 ### Resources

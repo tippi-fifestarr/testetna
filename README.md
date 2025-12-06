@@ -4,7 +4,17 @@ A complete, working reference implementation for programmatic trading on Decibel
 
 **Goal:** Get a bot running on testnet in < 5 minutes, then teach you how to customize it.
 
-## Part 1: The "Quick Win" (Relax Mode) 🚫🧠
+## Guide Overview
+
+This guide has 3 main sections:
+
+1. **Part 1: Get Your First Trade <5min (Brain Off)** 🚫🧠 - Follow these steps exactly to get your first trade running. No thinking required.
+2. **Part 2: Mental Model & Architecture** 🏗️ - Understand how Decibel works differently from CEXs. Skip this if you just want to start coding—you can always come back later.
+3. **Part 3: Make It Yours (Brain On)** 🧠✅ - Customize the code for your trading strategy. This is where you'll spend most of your time.
+
+---
+
+## Part 1: Get Your First Trade <5min (Brain Off) 🚫🧠
 
 Follow these steps exactly to get your first trade running.
 
@@ -97,7 +107,61 @@ npm run quick-win
 
 ---
 
-## Part 2: Make It Yours (Brain On) 🧠✅
+## Part 2: Mental Model & Architecture 🏗️
+
+Trading on Decibel has specific mechanics that differ from CEXs and many DEXs. Here are 5 key concepts for API traders.
+
+**💡 Skip this section if you just want the actions—jump to [Part 3](#part-3-make-it-yours-brain-on-) to start customizing your code. You can always come back here later when you need context for why we're making those changes.**
+
+### 1. The Three-Tier Account Model
+Decibel uses a three-tier account structure for programmatic trading:
+
+*   **Primary Wallet (Wallet Account):** Your login account. Used to access Decibel App and create API Wallets.
+*   **API Wallet:** A separate wallet you create at `app.decibel.trade/api` for programmatic trading. This wallet:
+    - Has its own address (e.g., `0x8096fc...`)
+    - Holds APT for gas fees
+    - Signs all your trading transactions
+    - This is what you set as `API_WALLET_ADDRESS` in your `.env` file
+*   **Trading Subaccount:** A trading account created from your API Wallet. This account:
+    - Holds USDC for trading collateral
+    - Created via `create_new_subaccount` (creates a non-primary subaccount with a random address)
+    - The address is automatically extracted from transaction events and written to `.env` as `SUBACCOUNT_ADDRESS`
+    - Different address from your API Wallet
+
+**Flow:** Primary Wallet → Create API Wallet → Create Trading Subaccount → Deposit USDC → Trade.
+
+**Note:** For programmatic traders, you primarily interact with the API Wallet (not the Primary Wallet). The Primary Wallet is just for logging in and creating API Wallets. Most users will have a single trading subaccount, though you can create multiple if needed for different strategies.
+
+### 2. Async Execution (The Queue)
+Decibel is an on-chain CLOB.
+*   **CEX:** `response = placeOrder()` -> Returns "Filled".
+*   **Decibel:** `response = placeOrder()` -> Returns "Transaction Hash" (Ticket to the Queue).
+
+**Implication:** Execution is asynchronous. The REST response confirms *submission*, not *fill*. Use the WebSocket stream for deterministic execution updates.
+*   [See WebSocket Docs](https://docs.decibel.trade/api-reference/websockets/orderupdate)
+
+### 3. "Lazy" Continuous Funding
+*   **Traditional:** You pay funding every 8 hours.
+*   **Decibel:** Funding ticks every second (continuous accrual).
+*   **The Mechanic:** You only "pay" (settle) when you modify or close the position.
+*   **Risk:** Your `Unrealized PnL` includes this accrued funding debt. Watch it closely to avoid liquidation.
+*   [See Position Management Docs](https://docs.decibel.trade/architecture/perps/position-management)
+
+### 4. Reduce-Only Logic
+Decibel implements strict "Close First" logic.
+*   **The Mechanic:** A Reduce-Only order will never flip your position (e.g. Long 1 -> Short 1). It caps execution at your current size.
+*   **Benefit:** Prevents accidental exposure when closing positions aggressively.
+*   [See Order Management Docs](https://docs.decibel.trade/transactions/overview)
+
+### 5. Bulk Orders (Unique Optimization)
+For Market Makers and HFTs:
+*   **The Mechanic:** You can update multiple orders in a single transaction.
+*   **Benefit:** Massive gas savings and atomic updates for spread management.
+*   [See Bulk Order Docs](https://docs.decibel.trade/transactions/order-management/place-bulk-order)
+
+---
+
+## Part 3: Make It Yours (Brain On) 🧠✅
 
 Now that you have a working baseline, here is how to adapt this code for your actual strategy.
 
@@ -163,58 +227,6 @@ If you want to use a specific trading subaccount (e.g., for a different strategy
 - Or modify [`src/2-create-subaccount.ts`](./src/2-create-subaccount.ts) to change the selection logic
 
 See the [source folder](./src/) for all the scripts `quick-win` is running, such as [4-deposit-usdc](./src/4-deposit-usdc.ts) (used above). 
-
----
-
-## Part 3: Mental Model & Architecture 🏗️
-
-Trading on Decibel has specific mechanics that differ from CEXs and many DEXs.
-
-### 1. The Three-Tier Account Model
-Decibel uses a three-tier account structure for programmatic trading:
-
-*   **Primary Wallet (Wallet Account):** Your login account. Used to access Decibel App and create API Wallets.
-*   **API Wallet:** A separate wallet you create at `app.decibel.trade/api` for programmatic trading. This wallet:
-    - Has its own address (e.g., `0x8096fc...`)
-    - Holds APT for gas fees
-    - Signs all your trading transactions
-    - This is what you set as `API_WALLET_ADDRESS` in your `.env` file
-*   **Trading Subaccount:** A trading account created from your API Wallet. This account:
-    - Holds USDC for trading collateral
-    - Created via `create_new_subaccount` (creates a non-primary subaccount with a random address)
-    - The address is automatically extracted from transaction events and written to `.env` as `SUBACCOUNT_ADDRESS`
-    - Different address from your API Wallet
-
-**Flow:** Primary Wallet → Create API Wallet → Create Trading Subaccount → Deposit USDC → Trade.
-
-**Note:** For programmatic traders, you primarily interact with the API Wallet (not the Primary Wallet). The Primary Wallet is just for logging in and creating API Wallets. Most users will have a single trading subaccount, though you can create multiple if needed for different strategies.
-
-### 2. Async Execution (The Queue)
-Decibel is an on-chain CLOB.
-*   **CEX:** `response = placeOrder()` -> Returns "Filled".
-*   **Decibel:** `response = placeOrder()` -> Returns "Transaction Hash" (Ticket to the Queue).
-
-**Implication:** Execution is asynchronous. The REST response confirms *submission*, not *fill*. Use the WebSocket stream for deterministic execution updates.
-*   [See WebSocket Docs](https://docs.decibel.trade/api-reference/websockets/orderupdate)
-
-### 3. "Lazy" Continuous Funding
-*   **Traditional:** You pay funding every 8 hours.
-*   **Decibel:** Funding ticks every second (continuous accrual).
-*   **The Mechanic:** You only "pay" (settle) when you modify or close the position.
-*   **Risk:** Your `Unrealized PnL` includes this accrued funding debt. Watch it closely to avoid liquidation.
-*   [See Position Management Docs](https://docs.decibel.trade/architecture/perps/position-management)
-
-### 4. Reduce-Only Logic
-Decibel implements strict "Close First" logic.
-*   **The Mechanic:** A Reduce-Only order will never flip your position (e.g. Long 1 -> Short 1). It caps execution at your current size.
-*   **Benefit:** Prevents accidental exposure when closing positions aggressively.
-*   [See Order Management Docs](https://docs.decibel.trade/transactions/overview)
-
-### 5. Bulk Orders (Unique Optimization)
-For Market Makers and HFTs:
-*   **The Mechanic:** You can update multiple orders in a single transaction.
-*   **Benefit:** Massive gas savings and atomic updates for spread management.
-*   [See Bulk Order Docs](https://docs.decibel.trade/transactions/order-management/place-bulk-order)
 
 ---
 

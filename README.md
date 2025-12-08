@@ -111,7 +111,8 @@ npm run quick-win
 
 Trading on Decibel has specific mechanics that differ from CEXs and many DEXs. Here are 5 key concepts for API traders.
 
-**💡 Skip this section if you just want the actions—jump to [Part 3](#part-3-make-it-yours-brain-on-) to start customizing your code. You can always come back here later when you need context for why we're making those changes.**
+> **💡 Jump to [Part 3](#part-3-make-it-yours-brain-on-) if you're ready to start customizing your code.**
+ You can always come back here later :D
 
 ### 1. The Three-Tier Account Model
 Decibel uses a three-tier account structure for programmatic trading:

@@ -22,7 +22,7 @@
  * - NOT from a metadata() function call!
  */
 
-import { createAptosClient, createAccount, waitForTransaction, createObjectAddress } from '../utils/client';
+import { createAptosClient, createAccount, waitForTransaction, createObjectAddress, getExplorerLink } from '../utils/client';
 import { config } from '../utils/config';
 import { usdcToChainUnits } from '../utils/formatting';
 
@@ -115,7 +115,7 @@ async function main() {
     });
     
     console.log(`📝 Transaction hash: ${pendingTransaction.hash}`);
-    console.log(`🔗 View on explorer: https://explorer.aptoslabs.com/txn/${pendingTransaction.hash}\n`);
+    console.log(`🔗 View on explorer: ${getExplorerLink(pendingTransaction.hash)}\n`);
     
     // Step 5: Wait for confirmation
     console.log('Step 5: Waiting for transaction confirmation...');

@@ -11,7 +11,7 @@
  * - API endpoint: openapi.json:1095-1130 (GET /api/v1/subaccounts)
  */
 
-import { createAptosClient, createAccount, waitForTransaction, getPrimarySubaccountAddress } from '../utils/client';
+import { createAptosClient, createAccount, waitForTransaction, getPrimarySubaccountAddress, getExplorerLink } from '../utils/client';
 import { config, authenticatedFetch } from '../utils/config';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -58,7 +58,7 @@ async function main() {
   });
   
   console.log(`📝 Transaction hash: ${pendingTransaction.hash}`);
-  console.log(`🔗 View on explorer: https://explorer.aptoslabs.com/txn/${pendingTransaction.hash}\n`);
+  console.log(`🔗 View on explorer: ${getExplorerLink(pendingTransaction.hash)}\n`);
   
   // Step 4: Wait for confirmation and extract subaccount from events
   console.log('Step 4: Waiting for transaction confirmation...');

@@ -96,3 +96,21 @@ export function getPrimarySubaccountAddress(accountAddress: string | AccountAddr
   
   return createObjectAddress(addressStr, 'decibel_dex_primary');
 }
+
+/**
+ * Generates a correctly formatted explorer link for the current network
+ * 
+ * Note: Tested for Netna staging only. For other networks, users must manually
+ * select the network from the explorer dropdown.
+ */
+export function getExplorerLink(hash: string): string {
+  const baseUrl = `https://explorer.aptoslabs.com/txn/${hash}`;
+  
+  // For Netna (Decibel staging), use the 'decibel' network parameter
+  if (config.FULLNODE_URL.includes('netna')) {
+    return `${baseUrl}?network=decibel`;
+  }
+  
+  // For other networks, return base URL (user must select network manually)
+  return baseUrl;
+}

@@ -23,7 +23,7 @@
  * - Generates client_order_id for tracking
  */
 
-import { createAptosClient, createAccount, waitForTransaction } from '../utils/client';
+import { createAptosClient, createAccount, waitForTransaction, getExplorerLink } from '../utils/client';
 import { config, authenticatedFetch } from '../utils/config';
 import { formatOrderParams, printOrderParams, MarketConfig } from '../utils/formatting';
 
@@ -145,7 +145,7 @@ async function main() {
     });
     
     console.log(`📝 Transaction hash: ${pendingTransaction.hash}`);
-    console.log(`🔗 View on explorer: https://explorer.aptoslabs.com/txn/${pendingTransaction.hash}\n`);
+    console.log(`🔗 View on explorer: ${getExplorerLink(pendingTransaction.hash)}\n`);
     
     // Step 7: Wait for confirmation
     console.log('Step 7: Waiting for transaction confirmation...');

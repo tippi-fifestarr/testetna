@@ -16,7 +16,7 @@
  * - This is for testing only - production uses real USDC
  */
 
-import { createAptosClient, createAccount, waitForTransaction } from '../utils/client';
+import { createAptosClient, createAccount, waitForTransaction, getExplorerLink } from '../utils/client';
 import { config } from '../utils/config';
 import { usdcToChainUnits } from '../utils/formatting';
 
@@ -81,7 +81,7 @@ async function main() {
     });
     
     console.log(`📝 Transaction hash: ${pendingTransaction.hash}`);
-    console.log(`🔗 View on explorer: https://explorer.aptoslabs.com/txn/${pendingTransaction.hash}\n`);
+    console.log(`🔗 View on explorer: ${getExplorerLink(pendingTransaction.hash)}\n`);
     
     // Step 4: Wait for confirmation
     console.log('Step 4: Waiting for transaction confirmation...');

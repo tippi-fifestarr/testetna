@@ -239,5 +239,12 @@ See the [source folder](./src/) for all the scripts `quick-win` is running, such
 
 ### Resources
 *   [Official Documentation](https://docs.decibel.trade)
+*   [Placing Your First Order Guide](https://docs.decibel.trade/quickstart/placing-your-first-order) - Shows Netna (Network.CUSTOM) and Testnet (Network.TESTNET) examples
 *   [Discord Community](https://discord.com/invite/decibel)
 *   [Netna Faucet (Staging)](https://faucet-dev-netna-us-central1-410192433417.us-central1.run.app)
+
+### Network Support
+
+This starter kit is tested and configured for **Netna staging network** only. 
+
+**Explorer Links:** The `getExplorerLink()` function in [`utils/client.ts`](./utils/client.ts) generates explorer URLs for Netna transactions. For other networks, users must manually select the network from the explorer dropdown.

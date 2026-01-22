@@ -84,7 +84,7 @@ async function main() {
     const transaction = await aptos.transaction.build.simple({
       sender: account.accountAddress,
       data: {
-        function: `${config.PACKAGE_ADDRESS}::dex_accounts::deposit_to_subaccount_at`,
+        function: `${config.PACKAGE_ADDRESS}::dex_accounts_entry::deposit_to_subaccount_at`,
         typeArguments: [],
         functionArguments: [
           config.SUBACCOUNT_ADDRESS,    // subaccount_address

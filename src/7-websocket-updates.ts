@@ -21,8 +21,8 @@ async function main() {
   console.log(`WebSocket URL: ${config.WEBSOCKET_URL}`);
   console.log(`User Address:  ${config.API_WALLET_ADDRESS}\n`);
   
-  // Create WebSocket connection
-  const ws = new WebSocket(config.WEBSOCKET_URL);
+  // Create WebSocket connection with auth via Sec-WebSocket-Protocol header
+  const ws = new WebSocket(config.WEBSOCKET_URL, ['decibel', config.API_BEARER_TOKEN]);
   
   // Handle connection open
   ws.on('open', () => {
@@ -30,11 +30,10 @@ async function main() {
     
     // Subscribe to order updates for this user
     const subscribeMessage = {
-      Subscribe: {
-        topic: `order_updates:${config.API_WALLET_ADDRESS}`
-      }
+      method: 'subscribe',
+      topic: `order_updates:${config.API_WALLET_ADDRESS}`,
     };
-    
+
     console.log('📨 Subscribing to order updates...');
     console.log(`   Topic: order_updates:${config.API_WALLET_ADDRESS}\n`);
     

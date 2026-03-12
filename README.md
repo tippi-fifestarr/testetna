@@ -19,8 +19,8 @@ This guide has 3 main sections:
 Follow these steps exactly to get your first trade running.
 
 ### 1. Prerequisites
-- [ ] **Node.js 18+** installed
-- [ ] **Petra Wallet** browser extension installed (recommended, but optional thanks to Aptos Connect)
+- [ ] **Node.js 22+** installed
+- [ ] **Petra Wallet** browser extension installed (required for testnet)
 - [ ] **Git** installed
 - [ ] [**Aptos CLI** (recommended)](https://aptos.dev/build/cli#-install-the-aptos-cli)
 - [ ] **APT for gas fees** from the [Aptos Faucet](https://aptos.dev/network/faucet) (you'll need your API Wallet address from step 2a)
@@ -56,7 +56,7 @@ The API Key is used for authenticated requests to the Decibel REST API. You'll g
 4.  **Fill out the API Key form:**
     ![Create API Key Form](./create-api-key.png)
     - **API Key Name:** Choose a name (e.g., `decibel` or `my-trading-bot`)
-    - **Network:** Select **"Decibel Devnet"** from the dropdown (important!)
+    - **Network:** Select **"Testnet"** from the dropdown
     - **Description:** Optional - add a note about what this key is for (150 chars max)
     - **Client usage:** Leave this **OFF** (unless you're building a web/mobile app)
     - Click **"Create New API Key"**
@@ -129,7 +129,7 @@ Trading on Decibel has specific mechanics that differ from CEXs and many DEXs. H
 Decibel uses a three-tier account structure for programmatic trading:
 
 *   **Primary Wallet (Wallet Account):** Your login account. Used to access Decibel App and create API Wallets.
-*   **API Wallet:** A separate wallet you create at `app.decibel.trade/api` for programmatic trading. This wallet:
+*   **API Wallet:** A separate wallet you create at `testnet-app.decibel.trade/api` (testnet) or `app.decibel.trade/api` (mainnet) for programmatic trading. This wallet:
     - Has its own address (e.g., `0x8096fc...`)
     - Holds APT for gas fees
     - Signs all your trading transactions

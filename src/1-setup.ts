@@ -127,11 +127,12 @@ async function main() {
   
   // Step 5: Test WebSocket connectivity
   console.log('Step 5: Testing WebSocket connectivity...');
+  let wsOk = false;
   try {
     const ws = await import('ws');
     const WebSocket = ws.default;
     
-    const wsClient = new WebSocket(config.WEBSOCKET_URL);
+    const wsClient = new WebSocket(config.WEBSOCKET_URL, ['decibel', config.API_BEARER_TOKEN]);
     
     await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
@@ -152,10 +153,12 @@ async function main() {
       });
     });
     
+    wsOk = true;
   } catch (error) {
     console.error('❌ WebSocket connection failed:', error);
+    console.error('   (WebSocket requires auth headers. This does not block trading.)\n');
   }
-  
+
   // Summary
   console.log('\n' + '='.repeat(80));
   console.log('📋 Setup Summary');
@@ -165,7 +168,7 @@ async function main() {
   console.log('✅ Account created from private key');
   console.log('✅ Balance checked (APT for gas fees)');
   console.log('✅ Markets API accessible');
-  console.log('✅ WebSocket server reachable');
+  console.log(wsOk ? '✅ WebSocket server reachable' : '⚠️ WebSocket connection failed (not required for trading)');
   console.log('='.repeat(80));
   
   const QUICK_WIN_MODE = process.env.QUICK_WIN_MODE === 'true';

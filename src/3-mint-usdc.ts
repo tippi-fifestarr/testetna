@@ -17,31 +17,52 @@
  * - This is for testing only - production uses real USDC
  */
 
-import { createAptosClient, createAccount, waitForTransaction, getExplorerLink } from '../utils/client';
+import { createAptosClient, createAccount, waitForTransaction, getExplorerLink, createObjectAddress } from '../utils/client';
 import { config } from '../utils/config';
 import { usdcToChainUnits } from '../utils/formatting';
 
 async function main() {
   console.log('💰 Minting Testnet USDC\n');
-  
+
   // Initialize client and account
   const aptos = createAptosClient();
   const account = createAccount();
-  
+
   console.log(`Account: ${account.accountAddress.toString()}\n`);
-  
+
   // Configuration
   const USDC_AMOUNT = 1000; // restricted_mint on Testnet (may be rate-limited)
   const USDC_DECIMALS = 6;
   const chainAmount = usdcToChainUnits(USDC_AMOUNT);
-  
+  const MIN_USDC_NEEDED = 200_000_000; // 200 USDC in chain units (enough to deposit)
+
+  // Check existing USDC balance before minting
+  const usdcMetadata = createObjectAddress(config.PACKAGE_ADDRESS, "USDC");
+  try {
+    const balances = await aptos.getCurrentFungibleAssetBalances({
+      options: {
+        where: {
+          owner_address: { _eq: account.accountAddress.toString() },
+          asset_type: { _eq: usdcMetadata.toString() },
+        },
+      },
+    });
+    const usdcBalance = balances.length > 0 ? Number(balances[0].amount) : 0;
+    if (usdcBalance >= MIN_USDC_NEEDED) {
+      console.log(`✅ Already have ${(usdcBalance / 1_000_000).toFixed(2)} USDC. Skipping mint.\n`);
+      return;
+    }
+  } catch {
+    // Indexer unavailable, proceed with mint attempt
+  }
+
   console.log('📊 Mint Configuration:');
   console.log('━'.repeat(60));
   console.log(`Amount (human):    ${USDC_AMOUNT} USDC`);
   console.log(`Amount (chain):    ${chainAmount} (with ${USDC_DECIMALS} decimals)`);
   console.log(`Mint type:         Restricted (Testnet, rate-limited)`);
   console.log('━'.repeat(60) + '\n');
-  
+
   console.log('⚠️ IMPORTANT: This is testnet-only USDC for learning.');
   console.log('   Production trading requires real USDC.\n');
   
@@ -111,15 +132,18 @@ async function main() {
     console.log('   - You need BOTH to trade successfully!\n');
     
   } catch (error: any) {
-    console.error('❌ Error minting USDC:', error);
-    console.error('\nPossible causes:');
-    console.error('  1. Insufficient APT for gas fees (run: npm run fund-wallet)');
-    console.error('  2. Network connection issues');
-    console.error('  3. Incorrect package address');
-    console.error('  4. USDC module not deployed at package address\n');
-    
-    console.error('💡 Tip: Check your APT balance first');
-    console.error('   Run: npm run fund-wallet\n');
+    const vmStatus = error?.transaction?.vm_status || '';
+    if (vmStatus.includes('E_MINT_ACCOUNT_LIMIT_EXCEEDED')) {
+      console.warn('⚠️ Mint rate limit reached. You probably already have USDC from a previous run.');
+      console.warn('   Continuing...\n');
+    } else {
+      console.error('❌ Error minting USDC:', error);
+      console.error('\nPossible causes:');
+      console.error('  1. Insufficient APT for gas fees (run: npm run fund-wallet)');
+      console.error('  2. Network connection issues');
+      console.error('  3. Incorrect package address');
+      console.error('  4. USDC module not deployed at package address\n');
+    }
   }
 }
 

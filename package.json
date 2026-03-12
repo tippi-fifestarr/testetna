@@ -12,6 +12,7 @@
     "place-order": "ts-node src/5-place-order.ts",
     "query-order": "ts-node src/6-query-order.ts",
     "websocket": "ts-node src/7-websocket-updates.ts",
+    "cancel-order": "ts-node src/8-cancel-order.ts",
     "quick-win": "QUICK_WIN_MODE=true npm run fund-wallet && QUICK_WIN_MODE=true npm run setup && QUICK_WIN_MODE=true npm run create-subaccount && QUICK_WIN_MODE=true npm run mint-usdc && QUICK_WIN_MODE=true npm run deposit-usdc && QUICK_WIN_MODE=true npm run place-order",
     "all": "npm run fund-wallet && npm run setup && npm run create-subaccount && npm run mint-usdc && npm run deposit-usdc"
   },

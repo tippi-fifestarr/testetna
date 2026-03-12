@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary
 
-Successfully built a working "Quick Win" implementation that goes from zero to a placed order on the Netna staging network. However, achieving this required discovering critical infrastructure details (faucet, unrestricted minting, chain ID) that are currently missing or incorrect in the official documentation.
+Successfully built a working "Quick Win" implementation that goes from zero to a placed order. Originally built on Netna staging, now migrated to Aptos Testnet. Building this required discovering critical infrastructure details (faucet, minting, chain ID) that were missing or incorrect in the official documentation.
 
 ## 2. Critical Blockers
 

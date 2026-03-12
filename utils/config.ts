@@ -13,20 +13,45 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
  * - Network URLs: placing-your-first-order.mdx:34, api-reference.mdx:37-39
  */
 
+/**
+ * Network presets. NETWORK env var selects which to use.
+ * Override individual values in .env if needed.
+ */
+const NETWORK_PRESETS: Record<string, { packageAddress: string; fullnodeUrl: string; restApiBaseUrl: string; websocketUrl: string }> = {
+  testnet: {
+    packageAddress: '0xe7da2794b1d8af76532ed95f38bfdf1136abfd8ea3a240189971988a83101b7f',
+    fullnodeUrl: 'https://api.testnet.aptoslabs.com/v1',
+    restApiBaseUrl: 'https://api.testnet.aptoslabs.com/decibel',
+    websocketUrl: 'wss://api.testnet.aptoslabs.com/decibel/ws',
+  },
+  mainnet: {
+    packageAddress: '', // TODO: add mainnet package address when deployed
+    fullnodeUrl: 'https://api.mainnet.aptoslabs.com/v1',
+    restApiBaseUrl: 'https://api.mainnet.aptoslabs.com/decibel',
+    websocketUrl: 'wss://api.mainnet.aptoslabs.com/decibel/ws',
+  },
+};
+
+const network = process.env.NETWORK || 'testnet';
+const preset = NETWORK_PRESETS[network] || NETWORK_PRESETS.testnet;
+
 export const config = {
-  // Blockchain Configuration
-  PACKAGE_ADDRESS: process.env.PACKAGE_ADDRESS || '0xb8a5788314451ce4d2fbbad32e1bad88d4184b73943b7fe5166eab93cf1a5a95',
-  FULLNODE_URL: process.env.FULLNODE_URL || 'https://api.netna.staging.aptoslabs.com/v1',
-  
+  // Network
+  NETWORK: network,
+
+  // Blockchain Configuration (env overrides preset)
+  PACKAGE_ADDRESS: process.env.PACKAGE_ADDRESS || preset.packageAddress,
+  FULLNODE_URL: process.env.FULLNODE_URL || preset.fullnodeUrl,
+
   // Account Credentials
-  API_WALLET_ADDRESS: process.env.API_WALLET_ADDRESS || '0xb540c13b3aab3966fd4c505bfd3851aed2f9983938ed4e89570a5234db65ff2',
+  API_WALLET_ADDRESS: process.env.API_WALLET_ADDRESS || '',
   API_WALLET_PRIVATE_KEY: process.env.API_WALLET_PRIVATE_KEY || '',
-  
-  // API Configuration
-  REST_API_BASE_URL: process.env.REST_API_BASE_URL || 'https://api.netna.aptoslabs.com/decibel',
-  WEBSOCKET_URL: process.env.WEBSOCKET_URL || 'wss://api.netna.aptoslabs.com/decibel/ws',
-  API_BEARER_TOKEN: process.env.API_BEARER_TOKEN || '', // Bearer token for authenticated API requests
-  
+
+  // API Configuration (env overrides preset)
+  REST_API_BASE_URL: process.env.REST_API_BASE_URL || preset.restApiBaseUrl,
+  WEBSOCKET_URL: process.env.WEBSOCKET_URL || preset.websocketUrl,
+  API_BEARER_TOKEN: process.env.API_BEARER_TOKEN || '',
+
   // Optional Configuration
   SUBACCOUNT_ADDRESS: process.env.SUBACCOUNT_ADDRESS || '',
   MARKET_ADDRESS: process.env.MARKET_ADDRESS || '',
@@ -48,9 +73,11 @@ export function validateConfig(): void {
     errors.push('❌ PACKAGE_ADDRESS is required in .env file');
   }
   
-  // Validate private key format (should start with 0x and be 66 characters)
-  if (config.API_WALLET_PRIVATE_KEY && !config.API_WALLET_PRIVATE_KEY.startsWith('0x')) {
-    errors.push('⚠️ API_WALLET_PRIVATE_KEY should start with 0x');
+  // Validate private key format (accepts 0x... or ed25519-priv-0x... formats)
+  if (config.API_WALLET_PRIVATE_KEY &&
+      !config.API_WALLET_PRIVATE_KEY.startsWith('0x') &&
+      !config.API_WALLET_PRIVATE_KEY.startsWith('ed25519-priv-')) {
+    errors.push('⚠️ API_WALLET_PRIVATE_KEY should start with 0x or ed25519-priv-0x');
   }
   
   // API Bearer Token is required for REST API calls (get from geomi.dev)

@@ -47,15 +47,23 @@ async function main() {
     console.log(`💰 APT Balance: ${aptBalance.toFixed(4)} APT`);
     
     if (aptBalance < 0.01) {
-      console.warn('⚠️ WARNING: Low APT balance! You need APT for gas fees.');
-      console.warn('   Each transaction costs ~0.001 APT');
-      console.warn('   Please fund your account before continuing.\n');
+      console.error('❌ Insufficient APT for gas fees!');
+      console.error('   Each transaction costs ~0.001 APT');
+      console.error('');
+      console.error('   Fund your wallet first:');
+      console.error('   1. Go to https://aptos.dev/network/faucet');
+      console.error(`   2. Paste your address: ${account.accountAddress.toString()}`);
+      console.error('   3. Click "Fund"');
+      console.error('   4. Re-run this script.\n');
+      process.exit(1);
     } else {
       console.log('✅ Sufficient APT for gas fees\n');
     }
   } catch (error) {
     console.error('❌ Error checking balance:', error);
-    console.error('   This might mean your account doesn\'t exist yet or network issues.\n');
+    console.error('   This might mean your account doesn\'t exist yet.');
+    console.error('   Fund your wallet at https://aptos.dev/network/faucet\n');
+    process.exit(1);
   }
   
   // Step 4: Fetch available markets

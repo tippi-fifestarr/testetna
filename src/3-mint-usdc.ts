@@ -3,7 +3,7 @@
  *
  * This script:
  * 1. Mints testnet USDC for trading collateral
- * 2. Uses unrestricted mint (no limit on Netna staging)
+ * 2. Uses restricted_mint on Testnet (rate-limited, mints to caller)
  * 3. USDC uses 6 decimals (1000 USDC = 1000_000000)
  *
  * WHY THIS IS NEEDED:
@@ -11,8 +11,9 @@
  * - USDC is your actual trading collateral (margin)
  * - You CANNOT trade without USDC in your subaccount
  *
- * IMPORTANT: Based on Java example analysis
- * - Function: usdc::mint (unrestricted, no limit on Netna staging)
+ * IMPORTANT: Testnet uses restricted_mint (1 argument: amount only)
+ * - Unlike Netna's unrestricted usdc::mint(to, amount), testnet's
+ *   restricted_mint(amount) mints to the caller and may be rate-limited.
  * - This is for testing only - production uses real USDC
  */
 
@@ -30,7 +31,7 @@ async function main() {
   console.log(`Account: ${account.accountAddress.toString()}\n`);
   
   // Configuration
-  const USDC_AMOUNT = 1000; // Unrestricted mint on Netna staging
+  const USDC_AMOUNT = 1000; // restricted_mint on Testnet (may be rate-limited)
   const USDC_DECIMALS = 6;
   const chainAmount = usdcToChainUnits(USDC_AMOUNT);
   
@@ -38,7 +39,7 @@ async function main() {
   console.log('━'.repeat(60));
   console.log(`Amount (human):    ${USDC_AMOUNT} USDC`);
   console.log(`Amount (chain):    ${chainAmount} (with ${USDC_DECIMALS} decimals)`);
-  console.log(`Mint type:         Unrestricted (Netna staging only)`);
+  console.log(`Mint type:         Restricted (Testnet, rate-limited)`);
   console.log('━'.repeat(60) + '\n');
   
   console.log('⚠️ IMPORTANT: This is testnet-only USDC for learning.');
@@ -51,10 +52,9 @@ async function main() {
     const transaction = await aptos.transaction.build.simple({
       sender: account.accountAddress,
       data: {
-        function: `${config.PACKAGE_ADDRESS}::usdc::mint`,
+        function: `${config.PACKAGE_ADDRESS}::usdc::restricted_mint`,
         typeArguments: [],
         functionArguments: [
-          account.accountAddress, // to_address - who receives the USDC
           chainAmount,            // amount in smallest units (6 decimals)
         ],
       },

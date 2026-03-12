@@ -1,40 +1,46 @@
 /**
- * Funds an account using the private Netna faucet.
+ * Testnet APT funding check.
  *
- * Faucet URL discovered from Java example:
- * https://faucet-dev-netna-us-central1-410192433417.us-central1.run.app
+ * The Aptos Testnet faucet is web-only — no programmatic API.
+ * We just check balance and tell the human where to go.
  *
- * @param address The address to fund (with or without 0x prefix)
- * @param amount Amount in Octas (default: 10,000,000,000 = 100 APT)
+ * Web faucet: https://aptos.dev/network/faucet
  */
-export async function fundFromNetnaFaucet(address: string, amount: number = 10000000000): Promise<void> {
-  const FAUCET_URL = 'https://faucet-dev-netna-us-central1-410192433417.us-central1.run.app';
-  
-  // Remove 0x prefix if present
-  const cleanAddress = address.startsWith('0x') ? address.slice(2) : address;
-  
-  const url = `${FAUCET_URL}/mint?amount=${amount}&address=${cleanAddress}`;
-  
-  console.log(`   Calling faucet at: ${FAUCET_URL}`);
-  console.log(`   Amount: ${amount} octas (${amount / 100000000} APT)`);
-  
-  const response = await fetch(url, {
-    method: 'POST',
-    body: '', // Empty body required for POST
-  });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Faucet request failed: ${response.status} ${response.statusText}\n${errorText}`);
+import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
+
+/**
+ * Checks if an account has enough APT. If not, tells the human to go fund it.
+ *
+ * @param address The address to check
+ * @param requiredOctas Minimum balance in octas (default: 50_000_000 = 0.5 APT)
+ * @returns The current balance in octas
+ */
+export async function checkTestnetFunding(address: string, requiredOctas: number = 50_000_000): Promise<number> {
+  const aptosConfig = new AptosConfig({ network: Network.TESTNET });
+  const aptos = new Aptos(aptosConfig);
+
+  let balance = 0;
+  try {
+    balance = await aptos.getAccountAPTAmount({ accountAddress: address });
+  } catch {
+    // Account doesn't exist yet
   }
 
-  console.log('   ✅ Faucet request successful!');
-  console.log('   Waiting for blockchain confirmation...');
-  
-  // Wait for blockchain to process the transaction
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  if (balance >= requiredOctas) {
+    return balance;
+  }
+
+  console.log('');
+  console.log('━'.repeat(60));
+  console.log('💡 You need APT for gas fees!');
+  console.log('━'.repeat(60));
+  console.log('');
+  console.log('   1. Go to https://aptos.dev/network/faucet');
+  console.log(`   2. Paste your address: ${address}`);
+  console.log('   3. Click "Fund"');
+  console.log('   4. Come back and re-run this script.');
+  console.log('');
+
+  throw new Error('Fund your account at https://aptos.dev/network/faucet then re-run.');
 }
-
-// Alias for backwards compatibility
-export const fundAccount = fundFromNetnaFaucet;
-

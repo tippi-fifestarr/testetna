@@ -7,11 +7,16 @@ import { sha3_256 } from '@noble/hashes/sha3';
  * Documentation: placing-your-first-order.mdx:31-37
  */
 export function createAptosClient(): Aptos {
+  const networkMap: Record<string, Network> = {
+    testnet: Network.TESTNET,
+    mainnet: Network.MAINNET,
+  };
+
   const aptosConfig = new AptosConfig({
-    network: Network.CUSTOM,
+    network: networkMap[config.NETWORK] || Network.CUSTOM,
     fullnode: config.FULLNODE_URL,
   });
-  
+
   return new Aptos(aptosConfig);
 }
 
@@ -99,18 +104,14 @@ export function getPrimarySubaccountAddress(accountAddress: string | AccountAddr
 
 /**
  * Generates a correctly formatted explorer link for the current network
- * 
- * Note: Tested for Netna staging only. For other networks, users must manually
- * select the network from the explorer dropdown.
  */
 export function getExplorerLink(hash: string): string {
   const baseUrl = `https://explorer.aptoslabs.com/txn/${hash}`;
-  
-  // For Netna (Decibel staging), use the 'decibel' network parameter
-  if (config.FULLNODE_URL.includes('netna')) {
-    return `${baseUrl}?network=decibel`;
+
+  if (config.FULLNODE_URL.includes('testnet')) {
+    return `${baseUrl}?network=testnet`;
   }
-  
+
   // For other networks, return base URL (user must select network manually)
   return baseUrl;
 }

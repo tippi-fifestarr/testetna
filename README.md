@@ -8,9 +8,9 @@ A complete, working reference implementation for programmatic trading on Decibel
 
 This guide has 3 main sections:
 
-1. **Part 1: Get Your First Trade <5min (Brain Off)** 🚫🧠 - Follow these steps exactly to get your first trade running. No thinking required.
-2. **Part 2: Mental Model & Architecture** 🏗️ - Understand how Decibel works differently from CEXs. Skip this if you just want to start coding—you can always come back later.
-3. **Part 3: Make It Yours (Brain On)** 🧠✅ - Customize the code for your trading strategy. This is where you'll spend most of your time.
+1. **Part 1: Get Your First Trade <5min (Brain Off)** 🚫🧠 Follow these steps exactly to get your first trade running. No thinking required.
+2. **Part 2: Mental Model & Architecture** 🏗️ Understand how Decibel works differently from CEXs. Skip this if you just want to start coding. You can always come back later.
+3. **Part 3: Make It Yours (Brain On)** 🧠✅ Customize the code for your trading strategy. This is where you'll spend most of your time.
 
 ---
 
@@ -23,6 +23,7 @@ Follow these steps exactly to get your first trade running.
 - [ ] **Petra Wallet** browser extension installed (recommended, but optional thanks to Aptos Connect)
 - [ ] **Git** installed
 - [ ] [**Aptos CLI** (recommended)](https://aptos.dev/build/cli#-install-the-aptos-cli)
+- [ ] **APT for gas fees** from the [Aptos Faucet](https://aptos.dev/network/faucet) (you'll need your API Wallet address from step 2a)
 
 ### 2. Get Your Credentials
 
@@ -30,7 +31,7 @@ You need two things: an API Wallet (for signing transactions) and an API Key (fo
 
 #### 2a. Create API Wallet
 
-1.  Go to [Decibel App (Staging)](https://app.decibel.trade/api).
+1.  Go to [Decibel App (Testnet)](https://testnet-app.decibel.trade/api).
 2.  Connect your Petra Wallet or "Continue with Google."
 3.  Click **"Create API Wallet"**.
 ![Create API Wallet Example](./create-api-wallet.png)
@@ -96,8 +97,18 @@ API_BEARER_TOKEN=YOUR_BEARER_TOKEN_HERE
 - [ ] `API_WALLET_ADDRESS` - From Decibel App (step 2a)  
 - [ ] `API_BEARER_TOKEN` - Bearer token from Geomi (step 2b, "Key secret" column)
 
-### 4. Run the "Quick Win"
-This script handles everything: funding (via private faucet), account creation, minting USDC, depositing, and placing a trade. It's running the scripts in `src/`.
+### 4. Fund Your Wallet
+
+Before running any scripts, your API Wallet needs APT for gas fees:
+
+1. Go to [https://aptos.dev/network/faucet](https://aptos.dev/network/faucet)
+2. Paste your **API Wallet Address** (from step 2a)
+3. Click "Fund"
+
+You can verify with: `npm run fund-wallet`
+
+### 5. Run the "Quick Win"
+This script handles everything: account creation, minting USDC, depositing, and placing a trade.
 
 ```bash
 npm run quick-win
@@ -238,13 +249,23 @@ See the [source folder](./src/) for all the scripts `quick-win` is running, such
 3.  **Explore Order Types:** Look into `Post-Only` and `Reduce-Only` params in the API docs for advanced control.
 
 ### Resources
+*   [TypeScript Starter Kit Guide](https://docs.decibel.trade/quickstart/typescript-starter-kit) - Full walkthrough for this repo
 *   [Official Documentation](https://docs.decibel.trade)
-*   [Placing Your First Order Guide](https://docs.decibel.trade/quickstart/placing-your-first-order) - Shows Netna (Network.CUSTOM) and Testnet (Network.TESTNET) examples
+*   [Placing Your First Order Guide](https://docs.decibel.trade/quickstart/placing-your-first-order) - Minimal code examples for Testnet
 *   [Discord Community](https://discord.com/invite/decibel)
-*   [Netna Faucet (Staging)](https://faucet-dev-netna-us-central1-410192433417.us-central1.run.app)
+*   [Aptos Testnet Faucet](https://aptos.dev/network/faucet) - Get APT for gas fees
 
 ### Network Support
 
-This starter kit is tested and configured for **Netna staging network** only. 
+This starter kit is tested and configured for **Aptos Testnet**.
 
-**Explorer Links:** The `getExplorerLink()` function in [`utils/client.ts`](./utils/client.ts) generates explorer URLs for Netna transactions. For other networks, users must manually select the network from the explorer dropdown.
+| Setting | Value |
+|---------|-------|
+| **Network** | Testnet |
+| **Package Address** | `0xe7da2794b1d8af76532ed95f38bfdf1136abfd8ea3a240189971988a83101b7f` |
+| **Fullnode** | `https://api.testnet.aptoslabs.com/v1` |
+| **APT Faucet** | [aptos.dev/network/faucet](https://aptos.dev/network/faucet) |
+
+To switch to **mainnet**, set `NETWORK=mainnet` in your `.env` and update `PACKAGE_ADDRESS` to the mainnet contract address (see [Contract Reference](https://docs.decibel.trade/developer-hub/on-chain/overview/contract-reference)).
+
+**Explorer Links:** The `getExplorerLink()` function in [`utils/client.ts`](./utils/client.ts) generates explorer URLs with `?network=testnet` for testnet transactions.
